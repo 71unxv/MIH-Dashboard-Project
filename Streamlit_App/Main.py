@@ -2,17 +2,20 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import matplotlib.pyplot as plt
-from matplotlib.widgets import RangeSlider
 import LogsDisp
+import AppPage
 
+# image_PDU = Image.open('PDU_Logo.jpg')
+
+# st.image(image, caption='Sunrise by the mountains')
 
 st.set_page_config(page_title="PDU Realtime Operation", page_icon=None, layout="wide",)
 PageList = [
-    "Realtime Analysis",
+    "Realtime Viewer",
     "Realtime Editing",
     "Activity Summary"
 ]
+st.sidebar.image('PDU_Logo.jpg')
 NavBar = st.sidebar.selectbox("Select Module:",PageList)
 
 @st.cache
@@ -22,173 +25,122 @@ def get_data(Filepath):
     Realtime_DB['SubActivity_Predict_code'] = Realtime_DB.SubActivity_Predict.cat.codes
 
     return Realtime_DB
-
 Realtime_DB = get_data("Data\\Merged\\Merge_DrillTrip_AAE-02.csv")
-
-st.markdown(
-    """
-    # PDU Realtime Operation
-    """
-)
-
+if NavBar=="Realtime Viewer":
+    st.markdown(
+        """
+        # PDU Realtime Viewer
+        """
+    )
+    AppPage.RealtimeViewer(Realtime_DB)
 # below should be Realtime Monitoring
-HeaderColumn = st.columns((0.9,2,2,2,9))
-# my_expander = st.expander("Expand")
-# with my_expander:
-    # clicked = my_widget("second")
-with HeaderColumn[1]:
-    option_a = st.multiselect(
-        'Display Sensor',
-        ["bitdepth",
-        "md",
-        "blockpos",
-        "rop",
-        "hklda",
-        "woba",
-        "torqa",
-        "rpm",
-        "stppress",
-        "mudflowin"],
-        ['rop'],
-        key='plot_a', 
-        )
-    for i in option_a:
-        print(i)
-        print(type(i))
-    # st.write('You selected:', option_a)
-with HeaderColumn[2]:
-    option_b = st.multiselect(
-        'Display Sensor',
-        ["bitdepth",
-        "md",
-        "blockpos",
-        "rop",
-        "hklda",
-        "woba",
-        "torqa",
-        "rpm",
-        "stppress",
-        "mudflowin"],
-        ['hklda'],
-        key='plot_b', 
-        )
-    # st.write('You selected:', option_b)
-with HeaderColumn[3]:
-    option_c = st.multiselect(
-        'Display Sensor',
-        ["bitdepth",
-        "md",
-        "blockpos",
-        "rop",
-        "hklda",
-        "woba",
-        "torqa",
-        "rpm",
-        "stppress",
-        "mudflowin"],
-        ['hklda'],
-        key='plot_c',
-        )
-    # st.write('You selected:', option_c)
+# HeaderColumn = st.columns((0.9,2,2,2,9))
 
-VizColumn = st.columns((12,3))
-with VizColumn[0]:
-# Initialize figure with subplots
-    fig = make_subplots(
-        rows=1, cols=7,
-        column_widths=[0.2, 0.2,0.2, 0.1, 0.1, 0.1, 0.1],
-        # row_heights=[0.4, 0.6],
-        specs=[
-                [{"type": "scatter"}, 
-                {"type": "scatter"}, 
-                {"type": "scatter"},
-                {"type": "bar"},
-                {"type": "bar"},
-                {"type": "bar"},
-                {"type": "bar"},
-                ]
-            ],
-        shared_yaxes=True,
-        horizontal_spacing=0.01,
-        subplot_titles = ['gadfdfs1','asd2','asd3'],
-        row_titles = ['gadfdfs1','asd2','asd3'],
-        column_titles =['gadfdfs1','asd2','asd3']
-        )
-    fig = LogsDisp.addWellLogs(fig,Realtime_DB,option_a,row=1,col=1)
-    fig = LogsDisp.addWellLogs(fig,Realtime_DB,option_b,row=1,col=2)
-    fig = LogsDisp.addWellLogs(fig,Realtime_DB,option_c,row=1,col=3)
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=Realtime_DB["rpm"],
-    #         y=Realtime_DB["dt_DF"],
-    #         mode="lines",
-    #         hoverinfo="text",
-    #         # showlegend=False,
-    #         # marker=dict(color="crimson", size=4, opacity=0.8)
-    #         ),
-    #     row=1, col=1
-    # )
-    # fig.add_trace(
-    #     go.Scatter(
-    #         y=Realtime_DB["dt_DF"],
-    #         x=Realtime_DB["stppress"],
-    #         mode="lines",
-    #         hoverinfo="text",
-    #         # showlegend=False,
-    #         # marker=dict(color="crimson", size=4, opacity=0.8)
-    #         ),
-    #     row=1, col=2
-    # )
-    # fig.add_trace(
-    #     go.Scatter(
-    #         y=Realtime_DB["dt_DF"],
-    #         x=Realtime_DB["hklda"],
-    #         mode="lines",
-    #         hoverinfo="text",
-    #         # showlegend=False,
-    #         # marker=dict(color="crimson", size=4, opacity=0.8)
-    #         ),
-    #     row=1, col=3
-    # )
+# with HeaderColumn[1]:
+#     option_a = st.selectbox(
+#         'sensor:',
+#         ("bitdepth",
+#         "md",
+#         "blockpos",
+#         "rop",
+#         "hklda",
+#         "woba",
+#         "torqa",
+#         "rpm",
+#         "stppress",
+#         "mudflowin"),
+#         7,
+#         key='plot_a'
+#         )
 
-    fig.update_layout(
-        autosize=False,
-        width=500,
-        height=1000,
-        xaxis=dict(
-            fixedrange=True
-        )
-    )
-    fig.add_trace(
-        go.Heatmap(
-                x=[0] * Realtime_DB["dt_DF"].shape[0],
-                y=Realtime_DB["dt_DF"].tolist(),
-                z=Realtime_DB["SubActivity_Predict_code"].tolist(),
-                # orientation='v'
-                ),
-        row=1, col=4
-    )
-    fig.add_trace(
-        go.Heatmap(
-                x=[0] * Realtime_DB["dt_DF"].shape[0],
-                y=Realtime_DB["dt_DF"].tolist(),
-                z=Realtime_DB["SubActivity_Predict_code"].tolist(),
-                # orientation='v'
-                ),
-        row=1, col=5
-    )
-    fig.add_trace(
-        go.Heatmap(
-                x=[0] * Realtime_DB["dt_DF"].shape[0],
-                y=Realtime_DB["dt_DF"].tolist(),
-                z=Realtime_DB["SubActivity_Predict_code"].tolist(),
-                # orientation='v'
-                ),
-        row=1, col=6
-    )
+#     # st.write('You selected:', option_a)
+# with HeaderColumn[2]:
+#     option_b = st.selectbox(
+#         'sensor:',
+#         ("bitdepth",
+#         "md",
+#         "blockpos",
+#         "rop",
+#         "hklda",
+#         "woba",
+#         "torqa",
+#         "rpm",
+#         "stppress",
+#         "mudflowin"),
+#         4,
+#         key='plot_b'
+#         )
+#     # st.write('You selected:', option_b)
+# with HeaderColumn[3]:
+#     option_c = st.selectbox(
+#         'sensor:',
+#         ("bitdepth",
+#         "md",
+#         "blockpos",
+#         "rop",
+#         "hklda",
+#         "woba",
+#         "torqa",
+#         "rpm",
+#         "stppress",
+#         "mudflowin"),
+#         5,
+#         key='plot_c'
+#         )
+#     # st.write('You selected:', option_c)
+
+# VizColumn = st.columns((12,3))
+# with VizColumn[0]:
+# # Initialize figure with subplots
+#     fig = make_subplots(
+#         rows=1, cols=7,
+#         column_widths=[0.2, 0.2,0.2, 0.1, 0.1, 0.1, 0.1],
+#         # row_heights=[0.4, 0.6],
+#         specs=[
+#                 [{"type": "scatter"}, 
+#                 {"type": "scatter"}, 
+#                 {"type": "scatter"},
+#                 {"type": "bar"},
+#                 {"type": "bar"},
+#                 {"type": "bar"},
+#                 {"type": "bar"},
+#                 ]
+#             ],
+#         shared_yaxes=True,
+#         horizontal_spacing=0.01,
+#         # subplot_titles = ['gadfdfs1','asd2','asd3'],
+#         row_titles = ["Date - Time"],
+#         column_titles =[option_a,option_b,option_c]
+#         )
 
 
-    st.plotly_chart(fig,use_container_width=True)
+#     fig.update_layout(
+#     # update layout
+#         showlegend=False,
+#         # autosize=False,
+        
+#         width=500,
+#         height=1000,
+#         hovermode="y unified",
+#         # xaxis=dict(
+#         #     fixedrange=True
+#         # )
+#         yaxis=dict(
+#             autorange='reversed'
+#         )
+#     )
+#     # display Sensor logs
+#     fig = LogsDisp.addWellLogs(fig,Realtime_DB,option_a,row=1,col=1)
+#     fig = LogsDisp.addWellLogs(fig,Realtime_DB,option_b,row=1,col=2)
+#     fig = LogsDisp.addWellLogs(fig,Realtime_DB,option_c,row=1,col=3)
+
+
+#     #% display Activity label
+#     fig = LogsDisp.addWellClass(fig,Realtime_DB,"SubActivity_Predict",row=1,col=4)
+#     fig = LogsDisp.addWellClass(fig,Realtime_DB,"SubActivity_Predict",row=1,col=5)
+#     fig = LogsDisp.addWellClass(fig,Realtime_DB,"SubActivity_Predict",row=1,col=6)
+
+#     st.plotly_chart(fig,use_container_width=True)
         
     
 

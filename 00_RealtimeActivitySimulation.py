@@ -21,13 +21,16 @@ RawData_DF = pd.read_csv(FileInput)
 RawData_DF.iloc[:initial_row,:].to_csv(FileOutput)
 for i,row in RawData_DF.iloc[initial_row:,:].iterrows():
 
-    if (i % 40)==0:
+    if (i % 800)==0:
         time.sleep(3)
         # print(time.ctime())
         # print(i)
         RawData_DF.iloc[:i+1,:].to_csv(FileOutput)
+        print("===========")
         print("Simulation are running")
         print("append time-" + str(row['time']))
+        print(row[["LABEL_ConnectionActivity","LABEL_SubActivity","LABEL_Activity"]])
+
 
         # tes_read = pd.read_csv(FileOutput)
         # print(tes_read['time'].tail(20).values)
