@@ -1,0 +1,8 @@
+*.xls
+*.xlsx
+*.csv
+*.hdf
+*.pyc
+*.zip
+*.part
+*.log
