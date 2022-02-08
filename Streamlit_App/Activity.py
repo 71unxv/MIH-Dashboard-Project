@@ -1,5 +1,5 @@
 import pandas as pd
-
+import numpy as np
 
 def GetTrippingActivity(isBitDepthMoving, hklda, rpm, mudflowing, Hookload):
 
@@ -155,7 +155,7 @@ def GetDrillingActivity_DF(Activity_DF,ConnectionWeight):
     
 def GenerateDuration_DF(RealTime_DB):
     RealTime_DB['dt'] = pd.to_datetime(RealTime_DB['dt'])
-    RealTime_DB["LABEL_All"] =RealTime_DB['LABEL_ConnectionActivity'].astype(str) + '--' +RealTime_DB['LABEL_SubActivity']+'--'+RealTime_DB['LABEL_Activity']
+    RealTime_DB["LABEL_All"] =RealTime_DB['LABEL_ConnectionActivity'].astype(str) + '--' +RealTime_DB['LABEL_SubActivity'].astype(str)+'--'+RealTime_DB['LABEL_Activity'].astype(str)+'--'+RealTime_DB['LABEL_MajorActivity'].astype(str)
 
     Duration_DB = pd.DataFrame(
         columns=[
@@ -173,13 +173,13 @@ def GenerateDuration_DF(RealTime_DB):
             'ConnectionTime',
             'On Bottom Hours',
             'Stand Duration',
-            "LABEL_ConnectionActivity", 'LABEL_SubActivity', "LABEL_Activity"
+            "LABEL_ConnectionActivity", 'LABEL_SubActivity', "LABEL_Activity", "LABEL_MajorActivity", "LABEL_StandGroup"
             ]
         )
 
     for k,DF_Temp in RealTime_DB.groupby((RealTime_DB['LABEL_All'].shift() != RealTime_DB['LABEL_All']).cumsum()):
 
-        if (("Hole_Depth" in locals()) or ("Hole_Depth" in globals())):
+        if not(("Hole_Depth" in locals()) or ("Hole_Depth" in globals())):
             Hole_Depth = 0
 
         list_temp = []
@@ -191,6 +191,7 @@ def GenerateDuration_DF(RealTime_DB):
         LABEL_ConnectionActivity = DF_Temp.head(1)['LABEL_ConnectionActivity'].values[0]
         LABEL_SubActivity = DF_Temp.head(1)['LABEL_SubActivity'].values[0]
         LABEL_Activity = DF_Temp.head(1)['LABEL_Activity'].values[0]
+        LABEL_MajorActivity = DF_Temp.head(1)['LABEL_MajorActivity'].values[0]
 
         Duration = round(((DF_Temp['dt'].max()-DF_Temp['dt'].min()).total_seconds())/60,2)
         Hole_Depth_Temp = DF_Temp['md'].max()
@@ -201,12 +202,42 @@ def GenerateDuration_DF(RealTime_DB):
 
         Bit_Depth = DF_Temp['bitdepth'].mean()
 
-        list_Out = [date, Time_start,Time_end, date_time, Duration, Hole_Depth, Bit_Depth, "", "", "", "", "", "", "",LABEL_ConnectionActivity, LABEL_SubActivity, LABEL_Activity]
+        list_Out = [date, Time_start,Time_end, date_time, Duration, Hole_Depth, Bit_Depth, np.empty(1), np.empty(1), np.empty(1), np.empty(1), np.empty(1), np.empty(1), np.empty(1),LABEL_ConnectionActivity, LABEL_SubActivity, LABEL_Activity, LABEL_MajorActivity, np.nan]
         Duration_DB.loc[len(Duration_DB)] = list_Out
 
-        
-    # SubActivityOutput.loc[SubActivityOutput['SubActivity'] == 'Rotary Drilling', 'RotateDrilling'] = SubActivityOutput.loc[SubActivityOutput['SubActivity'] == 'Rotary Drilling', 'Duration']
-    # SubActivityOutput.loc[SubActivityOutput['SubActivity'] == 'Slide Drilling', 'Slide Drilling'] = SubActivityOutput.loc[SubActivityOutput['SubActivity'] == 'Slide Drilling', 'Duration']
-    # SubActivityOutput.loc[SubActivityOutput['SubActivity'] == 'Reaming', 'ReamingTime'] = SubActivityOutput.loc[SubActivityOutput['SubActivity'] == 'Reaming', 'Duration']
-    # SubActivityOutput.loc[SubActivityOutput['SubActivity'] == 'Connection', 'ConnectionTime'] = SubActivityOutput.loc[SubActivityOutput['SubActivity'] == 'Connection', 'Duration']
+    Duration_DB = Duration_DB.astype(
+        {
+            'Duration(minutes)':'float32',
+            'Hole Depth(max)':'float32',
+            'Bit Depth(mean)':'float32',
+            "Meterage(m)(Drilling)":'float32',
+            'RotateDrilling':'float32',
+            'Slide Drilling':'float32',
+            'ReamingTime':'float32',
+            'ConnectionTime':'float32',
+            'On Bottom Hours':'float32',
+            'Stand Duration':'float32',
+            "LABEL_ConnectionActivity":'str', 'LABEL_SubActivity':'str', "LABEL_Activity":'str', "LABEL_MajorActivity":'str',"LABEL_StandGroup":'float'
+        }
+    )
+    Duration_DB.loc[Duration_DB['LABEL_SubActivity'] == 'ROTARY DRILLING', 'RotateDrilling'] = Duration_DB.loc[Duration_DB['LABEL_SubActivity'] == 'ROTARY DRILLING', 'Duration(minutes)']
+    Duration_DB.loc[Duration_DB['LABEL_SubActivity'] == 'SLIDE DRILLING', 'Slide Drilling'] = Duration_DB.loc[Duration_DB['LABEL_SubActivity'] == 'SLIDE DRILLING', 'Duration(minutes)']
+    Duration_DB.loc[Duration_DB['LABEL_SubActivity'] == 'REAMING', 'ReamingTime'] = Duration_DB.loc[Duration_DB['LABEL_SubActivity'] == 'REAMING', 'Duration(minutes)']
+    Duration_DB.loc[Duration_DB['LABEL_SubActivity'] == 'CONNECTION', 'ConnectionTime'] = Duration_DB.loc[Duration_DB['LABEL_SubActivity'] == 'CONNECTION', 'Duration(minutes)']
+
+    DrillingOnlyDB = Duration_DB[Duration_DB["LABEL_MajorActivity"]=="Drilling"]
+    start_idx = DrillingOnlyDB.index.values[0]
+    StandNum_Temp = 1
+    for i,row in DrillingOnlyDB[DrillingOnlyDB['LABEL_ConnectionActivity'].isin(['CONNECTION', "POST CONNECTION"])].iterrows():
+        if row['LABEL_ConnectionActivity'] == 'CONNECTION':
+            end_idx = i-1
+            Duration_DB.loc[i, "Meterage(m)(Drilling)"] = Duration_DB.loc[start_idx:end_idx, "Meterage(m)(Drilling)"].fillna(0).sum()
+            Duration_DB.loc[i, "On Bottom Hours"] = Duration_DB.loc[start_idx:end_idx, "Slide Drilling"].fillna(0).sum() + Duration_DB.loc[start_idx:end_idx, "RotateDrilling"].fillna(0).sum()
+            Duration_DB.loc[i, "Stand Duration"] = Duration_DB.loc[start_idx:end_idx, "ReamingTime"].fillna(0).sum() + Duration_DB.loc[i, "On Bottom Hours"] + row['ConnectionTime']
+            Duration_DB.loc[start_idx:end_idx+1, "LABEL_StandGroup"] = StandNum_Temp
+            StandNum_Temp = StandNum_Temp + 1
+        elif row['LABEL_ConnectionActivity'] == "POST CONNECTION":
+            start_idx = i
+
+        # print(str(start_idx) + " - " + str(end_idx))
     return Duration_DB

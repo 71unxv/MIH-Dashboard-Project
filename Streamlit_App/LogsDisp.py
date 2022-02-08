@@ -10,7 +10,7 @@ def addWellLogs(fig,data,options,row=1,col=1 ):
             fig.add_trace(
                 go.Scatter(
                     x=data[sensorName],
-                    y=data["dt_DF"],
+                    y=data["dt"],
                     mode="lines",
                     hoverinfo="text",
                     # showlegend=False,
@@ -22,7 +22,7 @@ def addWellLogs(fig,data,options,row=1,col=1 ):
         fig.add_trace(
             go.Scatter(
                 x=data[options],
-                y=data["dt_DF"],
+                y=data["dt"],
                 name=options,
                 mode="lines",
                 hoverinfo='x',
@@ -39,8 +39,8 @@ def addWellLogs(fig,data,options,row=1,col=1 ):
 def addWellClass(fig,data,label, row=1,col=1):
     fig.add_trace(
         go.Heatmap(
-                x=[0] * data["dt_DF"].shape[0],
-                y=data["dt_DF"].tolist(),
+                x=[0] * data["dt"].shape[0],
+                y=data["dt"].tolist(),
                 z=data[label + "_code"].tolist(),
                 text=data[label].tolist(),
                 hoverinfo="text",
@@ -55,3 +55,38 @@ def addWellClass(fig,data,label, row=1,col=1):
 
 
     return fig
+
+def updateWellLogs(fig,data,options,row=1,col=1 ):
+    # print(options)
+    if type(options) == list():
+        for sensorName in options:
+            fig.update_traces(
+                go.Scatter(
+                    x=data[sensorName],
+                    y=data["dt"],
+                    mode="lines",
+                    hoverinfo="text",
+                    # showlegend=False,
+                    # marker=dict(color="crimson", size=4, opacity=0.8)
+                    ),
+                row=row, col=col
+            )
+    else:
+        fig.update_traces(
+            go.Scatter(
+                x=data[options],
+                y=data["dt"],
+                name=options,
+                mode="lines",
+                hoverinfo='x',
+                hovertemplate='%{x} <br> %{y}',
+                # showlegend=False,
+                # marker=dict(color="crimson", size=4, opacity=0.8)
+                ),
+            row=row, col=col
+        )
+
+    return fig
+
+
+

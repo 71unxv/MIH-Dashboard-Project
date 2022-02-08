@@ -4,9 +4,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import LogsDisp
 
-def RealtimeViewer(Realtime_DB):
+def RealtimeSelection():
     HeaderColumn = st.columns((0.9,2,2,2,9))
-
     with HeaderColumn[1]:
         option_a = st.selectbox(
             'sensor:',
@@ -59,6 +58,8 @@ def RealtimeViewer(Realtime_DB):
             key='plot_c'
             )
         # st.write('You selected:', option_c)
+    return HeaderColumn
+def RealtimeViewer(Realtime_DB,option_a,option_b,option_c):
 
     VizColumn = st.columns((12,3))
     with VizColumn[0]:
@@ -107,10 +108,10 @@ def RealtimeViewer(Realtime_DB):
 
 
         #% display Activity label
-        fig = LogsDisp.addWellClass(fig,Realtime_DB,"SubActivity_Predict",row=1,col=4)
-        fig = LogsDisp.addWellClass(fig,Realtime_DB,"SubActivity_Predict",row=1,col=5)
-        fig = LogsDisp.addWellClass(fig,Realtime_DB,"SubActivity_Predict",row=1,col=6)
+        fig = LogsDisp.addWellClass(fig,Realtime_DB,"LABEL_ConnectionActivity",row=1,col=4)
+        fig = LogsDisp.addWellClass(fig,Realtime_DB,"LABEL_SubActivity",row=1,col=5)
+        fig = LogsDisp.addWellClass(fig,Realtime_DB,"LABEL_Activity",row=1,col=6)
 
         st.plotly_chart(fig,use_container_width=True)
 
-    return Realtime_DB
+    return Realtime_DB, fig
