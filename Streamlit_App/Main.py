@@ -7,7 +7,7 @@ import AppPage
 import Activity
 import time
 import datetime
-from st_aggrid import AgGrid
+# from st_aggrid import AgGrid
 # image_PDU = Image.open('PDU_Logo.jpg')
 
 # st.image(image, caption='Sunrise by the mountains')
@@ -188,30 +188,6 @@ if NavBar=="Realtime Viewer":
                     key='connection'
                     )
         
-        # SubActivity_Temp = cols[3].selectbox(
-        #             "SubActivity",
-        #             ["N/A",
-        #             'CEMENTING JOB',
-        #             'CIRCULATION',
-        #             'CONNECTION',
-        #             'LAY DOWN BHA',
-        #             'MAKE UP BHA',
-        #             'MOVING',
-        #             'OTHER',
-        #             'REAMING',
-        #             'RIG REPAIR',
-        #             'ROTARY DRILLING',
-        #             'RUNNING CASING IN',
-        #             'SLIDE DRILLING',
-        #             'SLIP AND CUTSTATIONARY',
-        #             'WAIT ON CEMENT',
-        #             'PRESSURE TEST',
-        #             'WASH UP',
-        #             'WASH DOWN',
-        #             'WORKING PIPE',
-        #             ],
-        #                 key='SubActivity_Temp'
-        #             )
         Activity_Temp = cols[3].selectbox(
                     "Activity",
                     ["N/A",
