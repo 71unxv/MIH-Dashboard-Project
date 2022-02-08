@@ -115,7 +115,7 @@ if NavBar=="Realtime Viewer":
         # st.write('You selected:', option_c)
 
 
-    RealTime_DB = get_RealTime_DB("RealTime_Test\\AAE-03_RealtimeSimulation.csv")
+    RealTime_DB = get_RealTime_DB("RealTime_Test/AAE-03_RealtimeSimulation.csv")
     VizColumn = st.columns((12,3))
 
     # Initialize figure with subplots
@@ -167,7 +167,7 @@ if NavBar=="Realtime Viewer":
     with VizColumn[0]:
         st.plotly_chart(fig,use_container_width=True)
     if st.button("Refresh"):
-        RealTime_DB = get_RealTime_DB("RealTime_Test\\AAE-03_RealtimeSimulation.csv")
+        RealTime_DB = get_RealTime_DB("RealTime_Test/AAE-03_RealtimeSimulation.csv")
 
 
     # with st.empty():
@@ -269,9 +269,9 @@ elif NavBar=="Activity Table":
         # PDU Activity Table
         """
     )
-    RealTime_DB = get_RealTime_DB("RealTime_Test\\AAE-03_RealtimeSimulation.csv")
+    RealTime_DB = get_RealTime_DB("RealTime_Test/AAE-03_RealtimeSimulation.csv")
     Activity_DB = Activity.GenerateDuration_DF(RealTime_DB)
-    Activity_DB.to_csv("RealTime_Test\\AAE-03_Activity_DB.csv")
+    Activity_DB.to_csv("RealTime_Test/AAE-03_Activity_DB.csv")
     TableColumnList = st.multiselect(
         'Choose Data',
         [           
@@ -295,14 +295,14 @@ elif NavBar=="Activity Table":
         # print(Activity_DB.dtypes)
 
     if st.button("Refresh"):
-        RealTime_DB = get_RealTime_DB("RealTime_Test\\AAE-03_RealtimeSimulation.csv")
+        RealTime_DB = get_RealTime_DB("RealTime_Test/AAE-03_RealtimeSimulation.csv")
         Activity_DB = Activity.GenerateDuration_DF(RealTime_DB)
-        Activity_DB.to_csv("RealTime_Test\\AAE-03_Activity_DB.csv")
+        Activity_DB.to_csv("RealTime_Test/AAE-03_Activity_DB.csv")
 
 elif NavBar=="Activity Summary":
     ChartColumn = st.columns((5,5))
     with ChartColumn[0]:
-        Activity_DB = pd.read_csv("RealTime_Test\\AAE-03_Activity_DB.csv")
+        Activity_DB = pd.read_csv("RealTime_Test/AAE-03_Activity_DB.csv")
         PieChart_DF = Activity_DB.groupby('LABEL_SubActivity')['Duration(minutes)'].sum()
 
     # Initialize figure with subplots
