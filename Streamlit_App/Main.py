@@ -45,7 +45,7 @@ InputActivity_DB = GenerateInputActivity_DB()
 if NavBar=="Realtime Viewer":
     st.markdown(
         """
-        # PDU Realtime Viewer
+        # Realtime Operation Viewer
         """
     )
     iiii = 0
