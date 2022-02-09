@@ -7,6 +7,7 @@ import AppPage
 import Activity
 import time
 import datetime
+import numpy as np
 # from st_aggrid import AgGrid
 # image_PDU = Image.open('PDU_Logo.jpg')
 
@@ -37,19 +38,6 @@ PageList = [
 st.sidebar.image('PDU_Logo.jpg')
 NavBar = st.sidebar.selectbox("Select Module:",PageList)
 
-def get_RealTime_DB(Filepath):
-    RealTime_DB = pd.read_csv(Filepath)
-    RealTime_DB['dt'] = pd.to_datetime(RealTime_DB['dt'])
-
-    RealTime_DB.LABEL_ConnectionActivity = pd.Categorical(RealTime_DB.LABEL_ConnectionActivity)
-    RealTime_DB['LABEL_ConnectionActivity_code'] = RealTime_DB['LABEL_ConnectionActivity'].cat.codes
-
-    RealTime_DB.LABEL_SubActivity = pd.Categorical(RealTime_DB.LABEL_SubActivity)
-    RealTime_DB['LABEL_SubActivity_code'] = RealTime_DB['LABEL_SubActivity'].cat.codes
-
-    RealTime_DB.LABEL_Activity = pd.Categorical(RealTime_DB.LABEL_Activity)
-    RealTime_DB['LABEL_Activity_code'] = RealTime_DB['LABEL_Activity'].cat.codes
-    return RealTime_DB
 
 
 InputActivity_DB = GenerateInputActivity_DB()
@@ -60,6 +48,23 @@ if NavBar=="Realtime Viewer":
         # PDU Realtime Viewer
         """
     )
+    iiii = 0
+    if st.button("Time 1"):
+        iiii = 1
+    if st.button("Time 2"):
+        iiii = 2
+    if st.button("Time 3"):
+        iiii = 3
+    if st.button("Time 4"):
+        iiii = 4
+    # with st.empty():
+    TestRadioButton = st.radio(
+        "Show Result?",
+        (
+            'Yes', 'No'
+        )
+    )
+    
     HeaderColumn = st.columns((0.9,2,2,2,9))
     with HeaderColumn[1]:
         option_a = st.selectbox(
@@ -115,18 +120,33 @@ if NavBar=="Realtime Viewer":
         # st.write('You selected:', option_c)
 
 
-    RealTime_DB = get_RealTime_DB("RealTime_Test/AAE-03_RealtimeSimulation.csv")
+    RealTime_DB_Real = pd.read_csv("RealTime_Test/AAE-03_RAW.csv")
+    idx_end = (np.round(np.linspace(1,len(RealTime_DB_Real),20)))
+    idx_end = idx_end[1:].astype(int)
+    
+    
+    print(idx_end)
+    print(idx_end[iiii])
+
+        
+    RealTime_DB = RealTime_DB_Real.iloc[1:idx_end[iiii], :]
+    if TestRadioButton== 'No':
+        RealTime_DB.loc[(idx_end[iiii]-np.round(idx_end[iiii]*(0.15)).astype(int)):(idx_end[iiii]), ["LABEL_ConnectionActivity","LABEL_Activity","LABEL_SubActivity","LABEL_MajorActivity"]] = "N/A"
+    
+
+
     VizColumn = st.columns((12,3))
 
     # Initialize figure with subplots
     fig = make_subplots(
-        rows=1, cols=7,
-        column_widths=[0.2, 0.2,0.2, 0.1, 0.1, 0.1, 0.1],
+        rows=1, cols=8,
+        column_widths=[0.2, 0.2,0.2, 0.1, 0.1, 0.1, 0.1, 0.1],
         # row_heights=[0.4, 0.6],
         specs=[
                 [{"type": "scatter"}, 
                 {"type": "scatter"}, 
                 {"type": "scatter"},
+                {"type": "bar"},
                 {"type": "bar"},
                 {"type": "bar"},
                 {"type": "bar"},
@@ -137,7 +157,7 @@ if NavBar=="Realtime Viewer":
         horizontal_spacing=0.01,
         # subplot_titles = ['gadfdfs1','asd2','asd3'],
         row_titles = ["Date - Time"],
-        column_titles =[option_a,option_b,option_c]
+        column_titles =[option_a,option_b,option_c,'ConnectionActivity', 'SubActivity', 'Activity', 'MajorActivity' ]
         )
 
 
@@ -164,10 +184,12 @@ if NavBar=="Realtime Viewer":
     fig = LogsDisp.addWellClass(fig,RealTime_DB,"LABEL_ConnectionActivity",row=1,col=4)
     fig = LogsDisp.addWellClass(fig,RealTime_DB,"LABEL_SubActivity",row=1,col=5)
     fig = LogsDisp.addWellClass(fig,RealTime_DB,"LABEL_Activity",row=1,col=6)
+    fig = LogsDisp.addWellClass(fig,RealTime_DB,"LABEL_MajorActivity",row=1,col=7)
     with VizColumn[0]:
         st.plotly_chart(fig,use_container_width=True)
-    if st.button("Refresh"):
-        RealTime_DB = get_RealTime_DB("RealTime_Test/AAE-03_RealtimeSimulation.csv")
+
+    
+        # RealTime_DB = get_RealTime_DB("RealTime_Test/AAE-03_RealtimeSimulation.csv")
 
 
     # with st.empty():
@@ -176,7 +198,7 @@ if NavBar=="Realtime Viewer":
         cols = st.columns(7)
         Date_Temp = cols[0].date_input(
                     "Date",
-                    datetime.date(2019, 7, 6)
+                    # datetime.date(2019, 7, 6)
                     )
         Time_Temp = cols[1].time_input(
                     "Time",
@@ -269,7 +291,7 @@ elif NavBar=="Activity Table":
         # PDU Activity Table
         """
     )
-    RealTime_DB = get_RealTime_DB("RealTime_Test/AAE-03_RealtimeSimulation.csv")
+    RealTime_DB = pd.read_csv("RealTime_Test/AAE-03_RealtimeSimulation.csv")
     Activity_DB = Activity.GenerateDuration_DF(RealTime_DB)
     Activity_DB.to_csv("RealTime_Test/AAE-03_Activity_DB.csv")
     TableColumnList = st.multiselect(
@@ -295,7 +317,7 @@ elif NavBar=="Activity Table":
         # print(Activity_DB.dtypes)
 
     if st.button("Refresh"):
-        RealTime_DB = get_RealTime_DB("RealTime_Test/AAE-03_RealtimeSimulation.csv")
+        RealTime_DB = pd.read_csv("RealTime_Test/AAE-03_RealtimeSimulation.csv")
         Activity_DB = Activity.GenerateDuration_DF(RealTime_DB)
         Activity_DB.to_csv("RealTime_Test/AAE-03_Activity_DB.csv")
 

@@ -21,32 +21,32 @@ def GetTrippingActivity(isBitDepthMoving, hklda, rpm, mudflowing, Hookload):
 def GetTrippingActivity_DF(Activity_DF, Hookload):
     Activity_DF['isBitDepthMoving'] = Activity_DF['bitdepth'].shift(periods=1) == Activity_DF['bitdepth']
 
-    Activity_DF["SubActivity_Predict"] = "Check"
+    Activity_DF["LABEL_SubActivity"] = "Check"
     idx_logic = ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Hookload) & (Activity_DF['rpm']==0) & (Activity_DF['mudflowin']>10))
     SubActivity_Label = "Wash Up/Down"
-    Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
     
     idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Hookload) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['mudflowin']>10))
     SubActivity_Label = "Reaming"
-    Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
 
     idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Hookload) & (Activity_DF['rpm']<10) & (Activity_DF['stppress']<100) & (Activity_DF['mudflowin']<50))
     SubActivity_Label = "Moving"
-    Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
 
     idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Hookload) & (Activity_DF['mudflowin']>10))
     SubActivity_Label = "Circulation"
-    Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
 
     idx_logic = ~idx_logic & ((Activity_DF['mudflowin']<10) & (Activity_DF['rpm']<10) & (Activity_DF['hklda']<Hookload))
     SubActivity_Label = "Connection"
-    Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
 
     idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['mudflowin']<10) & (Activity_DF['rpm']<Hookload) & (Activity_DF['hklda']<Hookload))
     SubActivity_Label = "Stationary"
-    Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
 
-    return Activity_DF["SubActivity_Predict"]
+    return Activity_DF["LABEL_SubActivity"]
 
 def GetDrillingActivity(woba,rpm,stppress,hklda,ConnectionWeight):
     if(woba>0 and rpm>10 and stppress>100 and hklda>ConnectionWeight):
@@ -70,87 +70,146 @@ def GetDrillingActivity(woba,rpm,stppress,hklda,ConnectionWeight):
 def GetDrillingActivity_DF(Activity_DF,ConnectionWeight):
     # v3
 
-    Activity_DF["SubActivity_Predict"] = "FALSE"
+    Activity_DF["LABEL_SubActivity"] = "FALSE"
 
     idx_logic = ((Activity_DF['woba']>0) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>ConnectionWeight))
     SubActivity_Label = "Rotary Drilling"
-    Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
 
     idx_logic = ~idx_logic & ((Activity_DF['woba']>0) & (Activity_DF['rpm']<10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>ConnectionWeight))
     SubActivity_Label = "Slide Drilling"
-    Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
     
     idx_logic = ~idx_logic & ((Activity_DF['woba']==0) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>ConnectionWeight))
     SubActivity_Label = "Reaming"
-    Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
 
     idx_logic = ~idx_logic & ((Activity_DF['woba']==0) & (Activity_DF['rpm']==0) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>ConnectionWeight))
     SubActivity_Label = "Wash Up/Down"
-    Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
 
 
     idx_logic = ~idx_logic & ((Activity_DF['woba']==0) & (Activity_DF['rpm']==0) & (Activity_DF['stppress']<50))
     SubActivity_Label="Look and define"
-    Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
 
     idx_logic = (idx_logic & (Activity_DF['hklda']>ConnectionWeight))
     SubActivity_Label = "Connection"
-    Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
     
 
     # v2
     
-        # Activity_DF["SubActivity_Predict"] = "FALSE"
+        # Activity_DF["LABEL_SubActivity"] = "FALSE"
 
         # idx_logic = ((Activity_DF['woba']>0) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>ConnectionWeight))
         # SubActivity_Label = "Rotary Drilling"
-        # Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+        # Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
 
         # idx_logic = ((Activity_DF['woba']>0) & (Activity_DF['rpm']<10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>ConnectionWeight))
         # SubActivity_Label = "Slide Drilling"
-        # Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+        # Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
         
         # idx_logic = ((Activity_DF['woba']==0) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>ConnectionWeight))
         # SubActivity_Label = "Reaming"
-        # Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+        # Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
 
         # idx_logic = ((Activity_DF['woba']==0) & (Activity_DF['rpm']==0) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>ConnectionWeight))
         # SubActivity_Label = "Wash Up/Down"
-        # Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+        # Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
 
 
         # idx_logic = ((Activity_DF['woba']==0) & (Activity_DF['rpm']==0) & (Activity_DF['stppress']<50))
         # SubActivity_Label="Look and define"
-        # Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+        # Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
 
         # idx_logic = (idx_logic & (Activity_DF['hklda']>ConnectionWeight))
         # SubActivity_Label = "Connection"
-        # Activity_DF.loc[idx_logic, "SubActivity_Predict"] = SubActivity_Label
+        # Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
     # def GetDrillingActivity_DF(ConnectionWeight,Activity_DF):
     #     v1
-    #     Activity_DF["SubActivity_Predict"] = "Look and define"
+    #     Activity_DF["LABEL_SubActivity"] = "Look and define"
 
     #     idx_logic = ((Activity_DF['woba']>0) & (Activity_DF['rpm']>10)) & ((Activity_DF['stppress']>100) & (Activity_DF['hklda']>ConnectionWeight))
-    #     Activity_DF.loc[idx_logic, "SubActivity_Predict"] = "Rotary Drilling"
+    #     Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = "Rotary Drilling"
 
     #     idx_logic = (Activity_DF['woba']>0) & (Activity_DF['rpm']<10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>ConnectionWeight)
-    #     Activity_DF.loc[idx_logic, "SubActivity_Predict"] = "Slide Drilling"
+    #     Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = "Slide Drilling"
 
     #     idx_logic = (Activity_DF['woba']==0) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>ConnectionWeight)
-    #     Activity_DF.loc[idx_logic, "SubActivity_Predict"] = "Reaming"
+    #     Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = "Reaming"
 
     #     idx_logic = (Activity_DF['woba']==0) & (Activity_DF['rpm']==0) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>ConnectionWeight)
-    #     Activity_DF.loc[idx_logic, "SubActivity_Predict"] = "Wash Up/Down"
+    #     Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = "Wash Up/Down"
 
     #     idx_logic = (Activity_DF['woba']==0) & (Activity_DF['rpm']==0) & (Activity_DF['stppress']<50) & (Activity_DF['hklda']<ConnectionWeight)
-    #     Activity_DF.loc[idx_logic, "SubActivity_Predict"] = "Connection"
+    #     Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = "Connection"
 
 
     #     return Activity_DF
 
-    return Activity_DF["SubActivity_Predict"]
+    return Activity_DF["LABEL_SubActivity"]
+
+def GetSubActivity_DF(Activity_DF, Hookload_Treshold):
+    
+    Activity_DF["LABEL_SubActivity"] = "FALSE/Check"
+    Activity_DF['isBitDepthMoving'] = Activity_DF['bitdepth'].shift(periods=1) == Activity_DF['bitdepth']
+
+    idx_logic = Activity_DF["LABEL_MajorActivity"] == "Drilling"
+    idx_logic = ~idx_logic & ((Activity_DF['woba']>0) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Hookload_Treshold))
+    SubActivity_Label = "Rotary Drilling"
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+
+    idx_logic = ~idx_logic & ((Activity_DF['woba']>0) & (Activity_DF['rpm']<10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Hookload_Treshold))
+    SubActivity_Label = "Slide Drilling"
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+    
+    idx_logic = ~idx_logic & ((Activity_DF['woba']==0) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Hookload_Treshold))
+    SubActivity_Label = "Reaming"
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+
+    idx_logic = ~idx_logic & ((Activity_DF['woba']==0) & (Activity_DF['rpm']==0) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Hookload_Treshold))
+    SubActivity_Label = "Wash Up/Down"
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
 
 
+    idx_logic = ~idx_logic & ((Activity_DF['woba']==0) & (Activity_DF['rpm']==0) & (Activity_DF['stppress']<50))
+    SubActivity_Label="Look and define"
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+
+    idx_logic = (idx_logic & (Activity_DF['hklda']>Hookload_Treshold))
+    SubActivity_Label = "Connection"
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+
+
+    # ############################
+    idx_logic = Activity_DF["LABEL_MajorActivity"] == "Tripping"
+
+    # Activity_DF["LABEL_SubActivity"] = "Check"
+    idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Hookload_Treshold) & (Activity_DF['rpm']==0) & (Activity_DF['mudflowin']>10))
+    SubActivity_Label = "Wash Up/Down"
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+    
+    idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Hookload_Treshold) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['mudflowin']>10))
+    SubActivity_Label = "Reaming"
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+
+    idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Hookload_Treshold) & (Activity_DF['rpm']<10) & (Activity_DF['stppress']<100) & (Activity_DF['mudflowin']<50))
+    SubActivity_Label = "Moving"
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+
+    idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Hookload_Treshold) & (Activity_DF['mudflowin']>10))
+    SubActivity_Label = "Circulation"
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+
+    idx_logic = ~idx_logic & ((Activity_DF['mudflowin']<10) & (Activity_DF['rpm']<10) & (Activity_DF['hklda']<Hookload_Treshold))
+    SubActivity_Label = "Connection"
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+
+    idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['mudflowin']<10) & (Activity_DF['rpm']<10) & (Activity_DF['hklda']<Hookload_Treshold))
+    SubActivity_Label = "Stationary"
+    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+    return Activity_DF['LABEL_SubActivity']
 
     
 def GenerateDuration_DF(RealTime_DB):
@@ -241,3 +300,29 @@ def GenerateDuration_DF(RealTime_DB):
 
         # print(str(start_idx) + " - " + str(end_idx))
     return Duration_DB
+
+
+def GetActivity_DF(Activity_DF, InputActivity_DB):
+    ii = 1
+    InputActivity_DB['DateTime'] = pd.to_datetime(InputActivity_DB['Date'] + ' ' + InputActivity_DB['Time'])
+    for i,row in InputActivity_DB.iterrows():
+        if ii<InputActivity_DB.shape[1]:
+            start_time_temp = InputActivity_DB.iloc[ii, 'DateTime']
+            end_time_temp = InputActivity_DB.iloc[ii+1, 'DateTime']
+
+            idx_logic = (Activity_DF['dt'] >= start_time_temp) & (Activity_DF['dt'] < end_time_temp)
+
+            activity_label_temp = InputActivity_DB.iloc[ii, 'Activity']
+            InputActivity_DB.loc[idx_logic, "LABEL_Activity"] = activity_label_temp
+            activity_label_temp = InputActivity_DB.iloc[ii, 'ConnectionActivity']
+            InputActivity_DB.loc[idx_logic, "LABEL_ConnectionActivity"] = activity_label_temp
+            activity_label_temp = InputActivity_DB.iloc[ii, 'MajorActivity']
+            InputActivity_DB.loc[idx_logic, "LABEL_MajorActivity"] = activity_label_temp
+        # ii = ii+1
+    
+    return None
+
+def GetConnectionActivity_DF(Activity_DF, InputActivity_DB):
+    return None
+
+
