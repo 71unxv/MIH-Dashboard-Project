@@ -29,7 +29,7 @@ def GenerateInputActivity_DB():
     return InputActivity_DB
 
 
-st.set_page_config(page_title="PDU Realtime Operation", page_icon=None, layout="wide",)
+st.set_page_config(page_title="Realtime Drilling Operation", page_icon=None, layout="wide",)
 PageList = [
     "Realtime Viewer",
     "Activity Table",
