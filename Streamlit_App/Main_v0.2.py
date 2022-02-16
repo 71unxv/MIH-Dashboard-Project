@@ -18,7 +18,8 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="Realtime Activity Mapping", page_icon=None, layout="wide",)
 
 st.sidebar.image('PDU_Logo.jpg')
-@st.cache(allow_output_mutation=True)
+# @st.experimental_memo
+# @st.cache(allow_output_mutation=True)
 def GenerateInputActivity_DB():
     InputActivity_DB = pd.DataFrame(
         columns=[
@@ -32,6 +33,8 @@ def GenerateInputActivity_DB():
             ]
         )
     return InputActivity_DB
+
+
 
 @st.cache(allow_output_mutation=True)
 def cache_RealTime_Data(well_id, StartDateTime_select, EndDateTime_select):
@@ -50,8 +53,10 @@ def cache_RealTime_Data(well_id, StartDateTime_select, EndDateTime_select):
     return Activity_DF
 
 
-InputActivity_DB = GenerateInputActivity_DB()
 
+# InputActivity_DB = GenerateInputActivity_DB()
+InputActivity_DB = pd.read_csv('RealTime_Test/Temp_InputActivity.csv', index_col = False)
+print(InputActivity_DB)
 CompName_JSON = requests.get(
         "https://pdumitradome.id/dome_api/rtdc/get_company/"
     ).json()
@@ -143,6 +148,23 @@ if (CompName_Select != '-'):
 if NavBar == "Activity Mapping" and (CompName_Select != '-') :
     
     st.title("Activity Mapping")
+    if st.button('Clear Table', key='refresh'):
+        # InputActivity_DB = GenerateInputActivity_DB(user_session_id)
+        # st.experiemental_rerun()
+        InputActivity_DB = GenerateInputActivity_DB()
+        InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
+        # st.experimental_memo.clear()
+        # st.caching.clear_cache()
+        # InputActivity_DB.loc[len(InputActivity_DB.index)] = [
+        #     np.nan,
+        #     np.nan,
+        #     np.nan,
+        #     np.nan,
+        #     np.nan,
+        #     np.nan,
+        #     np.nan
+        # ]
+
     with st.form(key='Activity Input:'):
         cols = st.columns(6)
         Date_Temp = cols[0].date_input(
@@ -204,7 +226,7 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') :
                 Remarks_Temp,
                 PIC_Temp
             ]
-
+            InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
             # print([
             #     Date_Temp,
             #     Time_Temp,
@@ -215,13 +237,15 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') :
             #     Remarks_Temp,
             #     PIC_Temp
             # ])
-            # print(len(InputActivity_DB))
+            # print(len(InputActivity_DB)) 
+            # st.write('Why hello there')
+
         with st.container():
+            InputActivity_DB = pd.read_csv('RealTime_Test/Temp_InputActivity.csv', index_col = False)
             
             Table_col = st.columns(1)
             Table_col[0].markdown('### Activity Log')
             Table = Table_col[0].dataframe(InputActivity_DB)
-
             Table_col[0].markdown('### Activity Summary Table')
             Table_2 = Table_col[0].write(InputActivity_DB)
         
