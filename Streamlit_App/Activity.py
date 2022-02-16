@@ -150,66 +150,68 @@ def GetDrillingActivity_DF(Activity_DF,ConnectionWeight):
 
     return Activity_DF["LABEL_SubActivity"]
 
-def GetSubActivity_DF(Activity_DF, Hookload_Treshold):
+def GetSubActivity_DF(Activity_DF):
     
-    Activity_DF["LABEL_SubActivity"] = "FALSE/Check"
-    Activity_DF['isBitDepthMoving'] = Activity_DF['bitdepth'].shift(periods=1) == Activity_DF['bitdepth']
+    Activity_DF["SubActivity"] = "FALSE/Check"
 
-    idx_logic = Activity_DF["LABEL_MajorActivity"] == "Drilling"
-    idx_logic = ~idx_logic & ((Activity_DF['woba']>0) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Hookload_Treshold))
+    idx_logic = Activity_DF["Activity"] == "DRILLING FORMATION"
+    # print((Activity_DF.dtypes))
+
+    idx_logic = idx_logic & ((Activity_DF['woba']>0) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']))
     SubActivity_Label = "Rotary Drilling"
-    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
 
-    idx_logic = ~idx_logic & ((Activity_DF['woba']>0) & (Activity_DF['rpm']<10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Hookload_Treshold))
+    idx_logic = ~idx_logic & ((Activity_DF['woba']>0) & (Activity_DF['rpm']<10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']))
     SubActivity_Label = "Slide Drilling"
-    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
     
-    idx_logic = ~idx_logic & ((Activity_DF['woba']==0) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Hookload_Treshold))
+    idx_logic = ~idx_logic & ((Activity_DF['woba']==0) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']))
     SubActivity_Label = "Reaming"
-    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
 
-    idx_logic = ~idx_logic & ((Activity_DF['woba']==0) & (Activity_DF['rpm']==0) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Hookload_Treshold))
+    idx_logic = ~idx_logic & ((Activity_DF['woba']==0) & (Activity_DF['rpm']==0) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']))
     SubActivity_Label = "Wash Up/Down"
-    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
 
 
     idx_logic = ~idx_logic & ((Activity_DF['woba']==0) & (Activity_DF['rpm']==0) & (Activity_DF['stppress']<50))
     SubActivity_Label="Look and define"
-    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
 
-    idx_logic = (idx_logic & (Activity_DF['hklda']>Hookload_Treshold))
+    idx_logic = (idx_logic & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']))
     SubActivity_Label = "Connection"
-    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
 
 
     # ############################
-    idx_logic = Activity_DF["LABEL_MajorActivity"] == "Tripping"
+    idx_logic = (Activity_DF["Activity"] == "TRIP IN") | (Activity_DF["Activity"] == "TRIP OUT")
+    Activity_DF['isBitDepthMoving'] = Activity_DF['bitdepth'].shift(periods=-1) != Activity_DF['bitdepth']
 
     # Activity_DF["LABEL_SubActivity"] = "Check"
-    idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Hookload_Treshold) & (Activity_DF['rpm']==0) & (Activity_DF['mudflowin']>10))
+    idx_logic = idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']) & (Activity_DF['rpm']==0) & (Activity_DF['mudflowin']>10))
     SubActivity_Label = "Wash Up/Down"
-    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
     
-    idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Hookload_Treshold) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['mudflowin']>10))
+    idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['mudflowin']>10))
     SubActivity_Label = "Reaming"
-    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
 
-    idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Hookload_Treshold) & (Activity_DF['rpm']<10) & (Activity_DF['stppress']<100) & (Activity_DF['mudflowin']<50))
+    idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']) & (Activity_DF['rpm']<10) & (Activity_DF['stppress']<100) & (Activity_DF['mudflowin']<50))
     SubActivity_Label = "Moving"
-    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
 
-    idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Hookload_Treshold) & (Activity_DF['mudflowin']>10))
+    idx_logic = ~idx_logic & (~(Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']) & (Activity_DF['mudflowin']>10))
     SubActivity_Label = "Circulation"
-    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
 
-    idx_logic = ~idx_logic & ((Activity_DF['mudflowin']<10) & (Activity_DF['rpm']<10) & (Activity_DF['hklda']<Hookload_Treshold))
+    idx_logic = ~idx_logic & ((Activity_DF['mudflowin']<10) & (Activity_DF['rpm']<10) & (Activity_DF['hklda']<Activity_DF['Hookload Treshold']))
     SubActivity_Label = "Connection"
-    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
 
-    idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['mudflowin']<10) & (Activity_DF['rpm']<10) & (Activity_DF['hklda']<Hookload_Treshold))
+    idx_logic = ~idx_logic & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['mudflowin']<10) & (Activity_DF['rpm']<10) & (Activity_DF['hklda']<Activity_DF['Hookload Treshold']))
     SubActivity_Label = "Stationary"
-    Activity_DF.loc[idx_logic, "LABEL_SubActivity"] = SubActivity_Label
-    return Activity_DF['LABEL_SubActivity']
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
+    return Activity_DF
 
     
 def GenerateDuration_DF(RealTime_DB):
@@ -303,24 +305,32 @@ def GenerateDuration_DF(RealTime_DB):
 
 
 def GetActivity_DF(Activity_DF, InputActivity_DB):
-    ii = 1
-    InputActivity_DB['DateTime'] = pd.to_datetime(InputActivity_DB['Date'] + ' ' + InputActivity_DB['Time'])
-    for i,row in InputActivity_DB.iterrows():
-        if ii<InputActivity_DB.shape[1]:
-            start_time_temp = InputActivity_DB.iloc[ii, 'DateTime']
-            end_time_temp = InputActivity_DB.iloc[ii+1, 'DateTime']
-
-            idx_logic = (Activity_DF['dt'] >= start_time_temp) & (Activity_DF['dt'] < end_time_temp)
-
-            activity_label_temp = InputActivity_DB.iloc[ii, 'Activity']
-            InputActivity_DB.loc[idx_logic, "LABEL_Activity"] = activity_label_temp
-            activity_label_temp = InputActivity_DB.iloc[ii, 'ConnectionActivity']
-            InputActivity_DB.loc[idx_logic, "LABEL_ConnectionActivity"] = activity_label_temp
-            activity_label_temp = InputActivity_DB.iloc[ii, 'MajorActivity']
-            InputActivity_DB.loc[idx_logic, "LABEL_MajorActivity"] = activity_label_temp
-        # ii = ii+1
+    ii = 0
+    # print('test')
     
-    return None
+    for i,row in InputActivity_DB.iterrows():
+        # if ii<InputActivity_DB.shape[1]:
+        try:
+            start_time_temp = InputActivity_DB.iloc[ii, 0]
+            end_time_temp = InputActivity_DB.iloc[ii+1, 0]
+            # print(InputActivity_DB.iloc[ii+1, 0])
+            idx_logic = (Activity_DF['dt'] >= start_time_temp) & (Activity_DF['dt'] < end_time_temp)
+        except:
+            start_time_temp = InputActivity_DB.iloc[ii, 0]
+            print(InputActivity_DB.iloc[ii, 0])
+            print('test')
+            # end_time_temp = InputActivity_DB.loc[ii+1, 'dt']
+            idx_logic = (Activity_DF['dt'] >= start_time_temp)
+            
+
+        activity_label_temp = InputActivity_DB.iloc[ii, 3]
+        print(idx_logic)
+        Activity_DF.loc[idx_logic, "Activity"] = activity_label_temp
+        activity_label_temp = InputActivity_DB.iloc[ii, 4]
+        Activity_DF.loc[idx_logic, "Hookload Treshold"] = activity_label_temp
+        ii = ii+1
+    
+    return Activity_DF
 
 def GetConnectionActivity_DF(Activity_DF, InputActivity_DB):
     return None

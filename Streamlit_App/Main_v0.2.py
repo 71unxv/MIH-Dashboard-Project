@@ -5,26 +5,26 @@ from plotly.subplots import make_subplots
 import LogsDisp
 import AppPage
 import Activity
+import IO_Data
 import time
-import datetime
+# import datetime
 import numpy as np
 
 import requests
 import json
-
+from datetime import datetime, timedelta
 
 
 st.set_page_config(page_title="Realtime Activity Mapping", page_icon=None, layout="wide",)
 
 st.sidebar.image('PDU_Logo.jpg')
-@st.cache(persist=True, allow_output_mutation=True)
+@st.cache(allow_output_mutation=True)
 def GenerateInputActivity_DB():
     InputActivity_DB = pd.DataFrame(
         columns=[
+            'dt',
             'Date',
             'Time',
-            # 'ConnectionActivity',
-            # 'SubActivity',
             "Activity",
             "Hook Treshold",
             "Remarks",
@@ -32,6 +32,23 @@ def GenerateInputActivity_DB():
             ]
         )
     return InputActivity_DB
+
+@st.cache(allow_output_mutation=True)
+def cache_RealTime_Data(well_id, StartDateTime_select, EndDateTime_select):
+    Activity_DF = IO_Data.getActivityData(well_id, StartDateTime_select, EndDateTime_select)
+    Activity_DF['dt'] = Activity_DF['dt'].astype('datetime64')
+    Activity_DF['bitdepth'] = Activity_DF['bitdepth'].astype('float64')
+    Activity_DF['blockpos'] = Activity_DF['blockpos'].astype('float64')
+    Activity_DF['rop'] = Activity_DF['rop'].astype('float64')
+    Activity_DF['hklda'] = Activity_DF['hklda'].astype('float64')
+    Activity_DF['woba'] = Activity_DF['woba'].astype('float64')
+    Activity_DF['torqa'] = Activity_DF['torqa'].astype('float64')
+    Activity_DF['rpm'] = Activity_DF['rpm'].astype('float64')
+    Activity_DF['stppress'] = Activity_DF['stppress'].astype('float64')
+    Activity_DF['mudflowin'] = Activity_DF['mudflowin'].astype('float64')
+
+    return Activity_DF
+
 
 InputActivity_DB = GenerateInputActivity_DB()
 
@@ -47,7 +64,7 @@ if CompName_Select == "-":
     Datetime_min = ['-']
     Datetime_max = ['-']
 else:
-    print(CompName_DF.loc[CompName_DF['company_name']==CompName_Select, 'cid'].values)
+    # print(CompName_DF.loc[CompName_DF['company_name']==CompName_Select, 'cid'].values)
     getWellAPI = "https://pdumitradome.id/dome_api/rtdc/get_well?cid=" + (CompName_DF.loc[CompName_DF['company_name']==CompName_Select, 'cid'].values)
 
     WellName_JSON = requests.get(
@@ -55,10 +72,31 @@ else:
         ).json()
 
     WellName_DF = pd.json_normalize(WellName_JSON, record_path = 'result')
+    WellName_DF['active_date'] = WellName_DF['active_date'].astype('datetime64').dt.date
+    WellName_DF['end_date'] = WellName_DF['end_date'].astype('datetime64').dt.date
 
     WellList = WellName_DF['well_name'].to_list()
 
 WellName_Select = st.sidebar.selectbox("Select Well",WellList)
+
+# twoday_dt_temp = 
+try:
+    Datetime_start = (WellName_DF.loc[WellName_DF['well_name']==WellName_Select, 'active_date']).to_list()[0]
+    Datetime_end = (WellName_DF.loc[WellName_DF['well_name']==WellName_Select, 'end_date']).to_list()[0]
+    well_id = (WellName_DF.loc[WellName_DF['well_name']==WellName_Select, 'wid'])
+    print(well_id)
+
+    print(Datetime_start)
+    print(Datetime_end)
+    st.sidebar.table(WellName_DF.loc[WellName_DF['well_name']==WellName_Select, ['active_date', 'end_date']])
+    if Datetime_end > datetime.now().date():
+        Datetime_end = datetime.now().date()
+except Exception as error_msg:
+    Datetime_start = datetime.now().date()
+    Datetime_end = datetime.now().date()
+
+    print(error_msg)
+    # None
 
 PageList = [
     "Activity Mapping",
@@ -66,21 +104,38 @@ PageList = [
 ]
 NavBar = st.sidebar.selectbox("Select Module:",PageList)
 
-with st.sidebar.form(key="Start Date-Time"):
-    # st.sidebar.markdown('###### Start Date-Time')
+
+with st.sidebar.form(key="Input Date-Time"):
+
     sideStart_col1,sideStart_col2 = st.sidebar.columns(2)
     
-    StartDate = sideStart_col1.date_input('Start Date-Time', key='StartDate')
-    StartTime = sideStart_col2.time_input('', key='StartTime')
-    #     # st.text("a")
-    # with side_col2:
-    #     st.text("b")
-# with st.sidebar.form(key="End Date-Time"):
-    # st.sidebar.markdown('###### End Date-Time')
+    StartDate = sideStart_col1.date_input('Start Date-Time',value=(Datetime_end - timedelta(days=2)), key='StartDate')
+    StartTime = sideStart_col2.time_input('',value=datetime.strptime('00:00:00', '%H:%M:%S'), key='StartTime')
+
+
     sideEnd_col1,sideEnd_col2 = st.sidebar.columns(2)
     
-    EndDate = sideEnd_col1.date_input('End Date-Time', key='EndDate')
-    EndTime = sideEnd_col2.time_input('', key='EndTime')
+    EndDate = sideEnd_col1.date_input('End Date-Time',value=Datetime_end, key='EndDate')
+    EndTime = sideEnd_col2.time_input('',value=datetime.strptime('00:00:00', '%H:%M:%S'), key='EndTime')
+
+    print(StartDate)
+    print(StartTime)
+    print(EndDate)
+    print(EndTime)
+
+    StartDateTime_select = datetime.combine(StartDate, StartTime)
+    EndDateTime_select = datetime.combine(EndDate, EndTime)
+
+## LOAD DATA
+if (CompName_Select != '-'):
+#     Activity_DF = IO_Data.getActivityData(well_id, StartDateTime_select, EndDateTime_select)
+    Activity_DF = cache_RealTime_Data(well_id, StartDateTime_select, EndDateTime_select)
+    
+
+
+
+
+
 
 
 
@@ -91,33 +146,33 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') :
     with st.form(key='Activity Input:'):
         cols = st.columns(6)
         Date_Temp = cols[0].date_input(
-                    "Date",
+                    "Date", value= Datetime_end, key='InputDate'
                     )
         Time_Temp = cols[1].time_input(
-                    "Time",
+                    "Time", value = datetime.now().time(), key='InputTime'
                     )
 
         
         Activity_Temp = cols[2].selectbox(
                     "Activity",
                     ["N/A",
-                         'CEMENTING JOB',
-                            'CIRCULATE HOLE CLEANING',
-                            'CONNECTION',
-                            'DRILL OUT CEMENT',
+                        #  'CEMENTING JOB',
+                        #     'CIRCULATE HOLE CLEANING',
+                        #     'CONNECTION',
+                        #     'DRILL OUT CEMENT',
                             'DRILLING FORMATION',
-                            'LAY DOWN BHA',
-                            'MAKE UP BHA',
-                            'NPT',
-                            'OTHER',
-                            'RUNNING CASING IN',
-                            'STATIONARY',
-                            'STUCK PIPE',
+                            # 'LAY DOWN BHA',
+                            # 'MAKE UP BHA',
+                            # 'NPT',
+                            # 'OTHER',
+                            # 'RUNNING CASING IN',
+                            # 'STATIONARY',
+                            # 'STUCK PIPE',
                             'TRIP IN',
                             'TRIP OUT',
-                            'WAIT ON CEMENT',
-                            'CIRCULATION',
-                            'RIG REPAIR'
+                            # 'WAIT ON CEMENT',
+                            # 'CIRCULATION',
+                            # 'RIG REPAIR'
                     ],
                     key='Activity'
                     )
@@ -135,14 +190,15 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') :
                     )
 
         submitted = st.form_submit_button('Submit')
-        print(submitted)
+        # print(submitted)
         
         if submitted:
+
+            # print(InputActivity_DB)
             InputActivity_DB.loc[len(InputActivity_DB.index)] = [
+                (datetime.combine(Date_Temp, Time_Temp)),
                 str(Date_Temp),
                 str(Time_Temp),
-                # Connection_Temp,
-                # SubActivity_Temp,
                 Activity_Temp,
                 HookTreshold_Temp,
                 Remarks_Temp,
@@ -168,6 +224,12 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') :
 
             Table_col[0].markdown('### Activity Summary Table')
             Table_2 = Table_col[0].write(InputActivity_DB)
+        
+
+        Activity_DF = Activity.GetActivity_DF(Activity_DF, InputActivity_DB)
+        Activity_DF = Activity.GetSubActivity_DF(Activity_DF)
+        st.table(Activity_DF.head(20))
+        
 
 else:
     st.markdown("<h1 style='text-align: center; font-size: 130px;margin-top: 300px;'>  Welcome !</h1>", unsafe_allow_html=True)
