@@ -20,21 +20,29 @@ st.set_page_config(page_title="Realtime Activity Mapping", page_icon=None, layou
 st.sidebar.image('PDU_Logo.jpg')
 # @st.experimental_memo
 # @st.cache(allow_output_mutation=True)
-def GenerateInputActivity_DB():
-    InputActivity_DB = pd.DataFrame(
-        columns=[
-            'dt',
-            'Date',
-            'Time',
-            "Activity",
-            "Hook Treshold",
-            "Remarks",
-            "PIC"
-            ]
-        )
+def GenerateInputActivity_DB(flag=False):
+    if flag:
+        InputActivity_DB = pd.read_csv('RealTime_Test/AAE-08_TEST_EDIT.csv', index_col = False)
+    else:
+        InputActivity_DB = pd.DataFrame(
+            columns=[
+                'dt',
+                'Date',
+                'Time',
+                "Activity",
+                "Hook Treshold",
+                "Remarks",
+                "PIC"
+                ]
+            )
+
     return InputActivity_DB
 
 
+@st.cache
+def convert_df(df):
+     # IMPORTANT: Cache the conversion to prevent computation on every rerun
+    return df.to_csv().encode('utf-8')
 
 @st.cache(allow_output_mutation=True)
 def cache_RealTime_Data(well_id, StartDateTime_select, EndDateTime_select):
@@ -120,6 +128,7 @@ with st.sidebar.form(key="Input Date-Time"):
 
     sideEnd_col1,sideEnd_col2 = st.sidebar.columns(2)
     
+
     EndDate = sideEnd_col1.date_input('End Date-Time',value=Datetime_end, key='EndDate')
     EndTime = sideEnd_col2.time_input('',value=datetime.strptime('00:00:00', '%H:%M:%S'), key='EndTime')
 
@@ -130,11 +139,17 @@ with st.sidebar.form(key="Input Date-Time"):
 
     StartDateTime_select = datetime.combine(StartDate, StartTime)
     EndDateTime_select = datetime.combine(EndDate, EndTime)
+    
+
+    # submit_a = 
+FormButton_a = st.sidebar.button('load Realtime Data')
+if FormButton_a:
+    with st.spinner(text="retreive from DOME In progress..."):
+        Activity_DF = cache_RealTime_Data(well_id, StartDateTime_select, EndDateTime_select)
 
 ## LOAD DATA
-if (CompName_Select != '-'):
-#     Activity_DF = IO_Data.getActivityData(well_id, StartDateTime_select, EndDateTime_select)
-    Activity_DF = cache_RealTime_Data(well_id, StartDateTime_select, EndDateTime_select)
+# if (CompName_Select != '-'):
+# if st.sidebar.button('load Realtime Data', key='Load Well'):
     
 
 
@@ -145,25 +160,27 @@ if (CompName_Select != '-'):
 
 
 
-if NavBar == "Activity Mapping" and (CompName_Select != '-') :
+if NavBar == "Activity Mapping" and (CompName_Select != '-') and FormButton_a:
     
     st.title("Activity Mapping")
-    if st.button('Clear Table', key='refresh'):
-        # InputActivity_DB = GenerateInputActivity_DB(user_session_id)
-        # st.experiemental_rerun()
-        InputActivity_DB = GenerateInputActivity_DB()
+    if st.button('Clear LastRow', key='refresh'):
+
+        InputActivity_DB = InputActivity_DB[:-1]
         InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
-        # st.experimental_memo.clear()
-        # st.caching.clear_cache()
-        # InputActivity_DB.loc[len(InputActivity_DB.index)] = [
-        #     np.nan,
-        #     np.nan,
-        #     np.nan,
-        #     np.nan,
-        #     np.nan,
-        #     np.nan,
-        #     np.nan
-        # ]
+    if st.button('LOAD AAE-08', key='AAE08'):
+
+        # InputActivity_DB = InputActivity_DB[:-1]
+        # InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
+        InputActivity_DB = GenerateInputActivity_DB(flag=True)
+        InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
+    if st.button('clear AAE-08', key='AAE08'):
+
+        InputActivity_DB = InputActivity_DB[1:1]
+        # InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
+        # InputActivity_DB = GenerateInputActivity_DB(flag=True)
+        InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
+
+
 
     with st.form(key='Activity Input:'):
         cols = st.columns(6)
@@ -171,30 +188,33 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') :
                     "Date", value= Datetime_end, key='InputDate'
                     )
         Time_Temp = cols[1].time_input(
-                    "Time", value = datetime.now().time(), key='InputTime'
+                    "Time",  key='InputTime'
                     )
 
         
         Activity_Temp = cols[2].selectbox(
                     "Activity",
                     ["N/A",
-                        #  'CEMENTING JOB',
-                        #     'CIRCULATE HOLE CLEANING',
-                        #     'CONNECTION',
-                        #     'DRILL OUT CEMENT',
+                         'CEMENTING JOB',
+                            'CIRCULATE HOLE CLEANING',
+                            'CONNECTION',
+                            'DRILL OUT CEMENT',
                             'DRILLING FORMATION',
-                            # 'LAY DOWN BHA',
-                            # 'MAKE UP BHA',
-                            # 'NPT',
-                            # 'OTHER',
-                            # 'RUNNING CASING IN',
-                            # 'STATIONARY',
-                            # 'STUCK PIPE',
+                            'LAY DOWN BHA',
+                            'MAKE UP BHA',
+                            'NPT',
+                            'N/D BOP',
+                            'N/U BOP',
+                            'OTHER',
+                            'RUNNING CASING IN',
+                            'STATIONARY',
+                            'STUCK PIPE',
                             'TRIP IN',
                             'TRIP OUT',
-                            # 'WAIT ON CEMENT',
-                            # 'CIRCULATION',
-                            # 'RIG REPAIR'
+                            'WAIT ON CEMENT',
+                            'CIRCULATION',
+                            'RIG REPAIR',
+                            'WIPER TRIP'
                     ],
                     key='Activity'
                     )
@@ -240,20 +260,46 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') :
             # print(len(InputActivity_DB)) 
             # st.write('Why hello there')
 
-        with st.container():
-            InputActivity_DB = pd.read_csv('RealTime_Test/Temp_InputActivity.csv', index_col = False)
+
+
+###### Perhitungan summary
+        if FormButton_a:
+            with st.spinner(text="Generate Activity Summary..."):
+                Activity_DF = Activity.GetActivity_DF(Activity_DF, InputActivity_DB)
+                Activity_DF = Activity.GetSubActivity_DF(Activity_DF)
             
-            Table_col = st.columns(1)
-            Table_col[0].markdown('### Activity Log')
-            Table = Table_col[0].dataframe(InputActivity_DB)
-            Table_col[0].markdown('### Activity Summary Table')
-            Table_2 = Table_col[0].write(InputActivity_DB)
+                SummaryActivity_DF = Activity.GenerateDuration_DF_v2(Activity_DF)
+
+                with st.container():
+
+                    InputActivity_DB = pd.read_csv('RealTime_Test/Temp_InputActivity.csv', index_col = False)
+                    
+                    Table_col = st.columns(1)
+                    Table_col[0].markdown('### Activity Log')
+                    Table = Table_col[0].dataframe(InputActivity_DB)
+                    Table_col[0].markdown('### Activity Summary Table')
+                    Table_2 = Table_col[0].dataframe(SummaryActivity_DF)
         
 
-        Activity_DF = Activity.GetActivity_DF(Activity_DF, InputActivity_DB)
-        Activity_DF = Activity.GetSubActivity_DF(Activity_DF)
-        st.table(Activity_DF.head(20))
-        
+        # st.table(Activity_DF.head(20))
+
+        # csv = convert_df(my_large_df)
+    if FormButton_a:
+        st.download_button(
+            label="Download Summary data as CSV",
+            data=convert_df(SummaryActivity_DF),
+            file_name='large_df.csv',
+            mime='text/csv',
+        )
+        st.download_button(
+            label="Download Realtime(5second) data as CSV",
+            data=convert_df(Activity_DF),
+            file_name='large_df.csv',
+            mime='text/csv',
+        )
+    # st.table(SummaryActivity_DF)
+
+
 
 else:
     st.markdown("<h1 style='text-align: center; font-size: 130px;margin-top: 300px;'>  Welcome !</h1>", unsafe_allow_html=True)
