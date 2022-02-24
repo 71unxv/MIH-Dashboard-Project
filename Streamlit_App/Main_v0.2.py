@@ -123,7 +123,7 @@ PageList = [
 NavBar = st.sidebar.selectbox("Select Module:",PageList)
 
 if 'SelectDateLogic' not in st.session_state:
-	st.session_state.SelectDateLogic = True
+	st.session_state.SelectDateLogic = False
 
 if 'StartDateTime_select' not in st.session_state:
 	st.session_state.StartDateTime_select = False
@@ -297,7 +297,7 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
             with st.spinner(text="Generate Activity Summary..."):
                 Table_col_2 = st.columns(1)
                 Activity_DF = Activity.GetActivity_DF(Activity_DF, InputActivity_DB)
-                Activity_DF = Activity.GetSubActivity_DF(Activity_DF)
+                Activity_DF = Activity.GetSubActivity_DF_v2(Activity_DF)
             
                 SummaryActivity_DF = Activity.GenerateDuration_DF_v2(Activity_DF)
 

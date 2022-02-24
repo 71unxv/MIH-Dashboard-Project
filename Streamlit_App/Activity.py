@@ -489,3 +489,173 @@ def GenerateDuration_DF_v2(RealTime_DB):
     return Duration_DB
 
 
+
+def GetSubActivity_DF_v2(Activity_DF):
+    logic_status = 0
+    Activity_DF["SubActivity"] = "FALSE/Check"
+    Activity_DF["logic_status"] = logic_status
+
+
+    idx_logic_activity = Activity_DF["Activity"].isin(["DRILLING FORMATION", 
+                                            'CIRCULATE HOLE CLEANING',
+                                            'CONNECTION',
+                                            'DRILL OUT CEMENT',
+                                        ])
+    # print((Activity_DF.dtypes))
+
+    idx_logic = idx_logic_activity & ((Activity_DF['woba']>0) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']))
+    SubActivity_Label = "Rotary Drilling"
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
+    #
+
+    logic_status = logic_status + 1
+    Activity_DF.loc[idx_logic, "logic_status"] = logic_status
+    # 1
+
+    logic_status = logic_status + 1
+    Activity_DF.loc[idx_logic, "logic_status"] = logic_status
+
+    idx_logic = idx_logic_activity &(Activity_DF["SubActivity"] == "FALSE/Check") & ((Activity_DF['woba']>0) & (Activity_DF['rpm']<10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']))
+    SubActivity_Label = "Slide Drilling"
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
+    # 2
+
+    logic_status = logic_status + 1
+    Activity_DF.loc[idx_logic, "logic_status"] = logic_status
+    
+    idx_logic = idx_logic_activity &(Activity_DF["SubActivity"] == "FALSE/Check") & ((Activity_DF['woba']==0) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']))
+    SubActivity_Label = "Reaming"
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
+    #3
+
+    logic_status = logic_status + 1
+    Activity_DF.loc[idx_logic, "logic_status"] = logic_status
+
+    idx_logic = idx_logic_activity &(Activity_DF["SubActivity"] == "FALSE/Check") & ((Activity_DF['woba']==0) & (Activity_DF['rpm']==0) & (Activity_DF['stppress']>100) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']))
+    SubActivity_Label = "Wash Up/Down"
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
+    #4
+
+    logic_status = logic_status + 1
+    Activity_DF.loc[idx_logic, "logic_status"] = logic_status
+
+
+    idx_logic = idx_logic_activity &(Activity_DF["SubActivity"] == "FALSE/Check") & ((Activity_DF['woba']==0) & (Activity_DF['rpm']==0) & (Activity_DF['stppress']<50))
+    SubActivity_Label = "Connection"
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
+    #5
+
+    logic_status = logic_status + 1
+    Activity_DF.loc[idx_logic, "logic_status"] = logic_status
+
+    # idx_logic = idx_logic_activity & ((Activity_DF["SubActivity"] == "FALSE/Check") & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']))
+    idx_logic = idx_logic & (Activity_DF['hklda']>Activity_DF['Hookload Treshold'])
+    SubActivity_Label="Look and define"
+    Activity_DF.loc[idx_logic, "SubActivity"] = SubActivity_Label
+    #6
+
+    logic_status = logic_status + 1
+    Activity_DF.loc[idx_logic, "logic_status"] = logic_status
+    #7
+
+
+    # ############################
+    idx_logic_activity_2 = Activity_DF["Activity"].isin([
+                                            'NPT',
+                                            'N/D BOP',
+                                            'N/U BOP',
+                                            'OTHER',
+                                            'RUNNING CASING IN',
+                                            'STATIONARY',
+                                            'STUCK PIPE',
+                                            'TRIP IN',
+                                            'TRIP OUT',
+                                            'WAIT ON CEMENT',
+                                            'LAY DOWN BHA',
+                                            'MAKE UP BHA',
+                                            'WIPER TRIP'
+                                        ]
+                                        )
+    Activity_DF['isBitDepthMoving'] = Activity_DF['bitdepth'].shift(periods=-1) != Activity_DF['bitdepth']
+
+    # Activity_DF["LABEL_SubActivity"] = "Check"
+    idx_logic_2 = idx_logic_activity_2 & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']) & (Activity_DF['rpm']==0) & (Activity_DF['mudflowin']>10))
+    SubActivity_Label = "Wash Up/Down"
+    Activity_DF.loc[idx_logic_2, "SubActivity"] = SubActivity_Label
+    # DisplayDF(Activity_DF.loc[idx_logic_2, :])
+    #
+
+    logic_status = logic_status + 1
+    Activity_DF.loc[idx_logic_2, "logic_status"] = logic_status
+    #8
+    
+    idx_logic_2 = idx_logic_activity_2 &(Activity_DF["SubActivity"] == "FALSE/Check") & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']) & (Activity_DF['rpm']>10) & (Activity_DF['stppress']>100) & (Activity_DF['mudflowin']>10))
+    SubActivity_Label = "Reaming"
+    Activity_DF.loc[idx_logic_2, "SubActivity"] = SubActivity_Label
+    
+
+    logic_status = logic_status + 1
+    Activity_DF.loc[idx_logic_2, "logic_status"] = logic_status
+    #9
+
+    idx_logic_2 = idx_logic_activity_2 &(Activity_DF["SubActivity"] == "FALSE/Check") & ((Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']) & (Activity_DF['rpm']<10) & (Activity_DF['stppress']<100) & (Activity_DF['mudflowin']<50))
+    SubActivity_Label = "Moving"
+    Activity_DF.loc[idx_logic_2, "SubActivity"] = SubActivity_Label
+
+    logic_status = logic_status + 1
+    Activity_DF.loc[idx_logic_2, "logic_status"] = logic_status
+    #10
+
+    idx_logic_2 = idx_logic_activity_2 &(Activity_DF["SubActivity"] == "FALSE/Check") & (~(Activity_DF['isBitDepthMoving']) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']) & (Activity_DF['mudflowin']>10))
+    SubActivity_Label = "Circulation"
+    Activity_DF.loc[idx_logic_2, "SubActivity"] = SubActivity_Label
+    #
+
+    logic_status = logic_status + 1
+    Activity_DF.loc[idx_logic_2, "logic_status"] = logic_status
+    #11
+
+    idx_logic_2 = idx_logic_activity_2 &(Activity_DF["SubActivity"] == "FALSE/Check") & ((Activity_DF['mudflowin']<10) & (Activity_DF['rpm']<10) & (Activity_DF['hklda']<Activity_DF['Hookload Treshold']))
+    SubActivity_Label = "Connection"
+    Activity_DF.loc[idx_logic_2, "SubActivity"] = SubActivity_Label
+    #
+
+    logic_status = logic_status + 1
+    Activity_DF.loc[idx_logic_2, "logic_status"] = logic_status
+    #12
+
+    idx_logic_2 = idx_logic_activity_2 &(Activity_DF["SubActivity"] == "FALSE/Check") & ((~Activity_DF['isBitDepthMoving']) & (Activity_DF['mudflowin']<10) & (Activity_DF['rpm']<10) & (Activity_DF['hklda']>Activity_DF['Hookload Treshold']))
+    SubActivity_Label = "Stationary"
+    Activity_DF.loc[idx_logic_2, "SubActivity"] = SubActivity_Label
+    #
+
+    logic_status = logic_status + 1
+    Activity_DF.loc[idx_logic_2, "logic_status"] = logic_status
+    #13
+
+    ## force to be same as activity
+    idx_logic_3 = Activity_DF["Activity"].isin([
+                            'CEMENTING JOB',
+                            'CONNECTION',
+                            'LAY DOWN BHA',
+                            'MAKE UP BHA',
+                            'NPT',
+                            'N/D BOP',
+                            'N/U BOP',
+                            'RUNNING CASING IN',
+                            'STATIONARY',
+                            'STUCK PIPE',
+                            'WAIT ON CEMENT',
+                            'RIG REPAIR',
+    ])
+    Activity_DF.loc[idx_logic_3, "SubActivity"] = Activity_DF.loc[idx_logic_3, "Activity"]
+    #
+
+    logic_status = logic_status + 1
+    Activity_DF.loc[idx_logic_3, "logic_status"] = logic_status
+    #14
+
+    # print(Activity_DF.columns)
+
+    return Activity_DF
+ 
