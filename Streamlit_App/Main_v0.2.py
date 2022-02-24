@@ -69,6 +69,11 @@ def cache_RealTime_Data(well_id, StartDateTime_select, EndDateTime_select):
     return Activity_DF
 
 
+PageList = [
+    "Activity Mapping",
+    "Summary Dashboard",
+]
+NavBar = st.sidebar.selectbox("Select Module:",PageList)
 
 # InputActivity_DB = GenerateInputActivity_DB()
 InputActivity_DB = pd.read_csv('RealTime_Test/Temp_InputActivity.csv', index_col = False)
@@ -116,11 +121,6 @@ except Exception as error_msg:
     print(error_msg)
     # None
 
-PageList = [
-    "Activity Mapping",
-    "Summary Dashboard",
-]
-NavBar = st.sidebar.selectbox("Select Module:",PageList)
 
 if 'SelectDateLogic' not in st.session_state:
 	st.session_state.SelectDateLogic = False
@@ -332,7 +332,42 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
 
     # st.table(SummaryActivity_DF)
 
+elif NavBar =="Summary Dashboard":
+    ChartColumn = st.columns((5,5))
+    with ChartColumn[0]:
+        Activity_DB = pd.read_csv("RealTime_Test/AAE-03_Activity_DB.csv")
+        PieChart_DF = Activity_DB.groupby('LABEL_SubActivity')['Duration(minutes)'].sum()
 
+    # Initialize figure with subplots
+        figchart = make_subplots(
+            rows=2, cols=2,
+            # column_widths=[0.2, 0.2,0.2, 0.1, 0.1, 0.1, 0.1],
+            # row_heights=[0.4, 0.6],
+            specs=[
+                    [{"type": "pie"}, 
+                    {"type": "scatter"},
+                    ],
 
+                    [ 
+                    {"type": "bar"},
+                    {"type": "bar"},
+                    ]
+                ],
+            # shared_yaxes=True,
+            # horizontal_spacing=0.01,
+            # subplot_titles = ['gadfdfs1','asd2','asd3'],
+            )
+
+        figchart.add_trace(
+                go.Pie(
+                labels = PieChart_DF.index,
+                values = PieChart_DF.values/60,
+                hoverinfo = "label+percent",
+                textinfo = "value+label"
+                ),
+                row=1, col=1
+        
+            )
+        st.plotly_chart(figchart,use_container_width=True)
 else:
     st.markdown("<h1 style='text-align: center; font-size: 130px;margin-top: 300px;'>  Welcome !</h1>", unsafe_allow_html=True)
