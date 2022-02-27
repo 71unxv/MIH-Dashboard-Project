@@ -13,6 +13,8 @@ import numpy as np
 import requests
 import json
 from datetime import datetime, timedelta
+from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
+
 
 
 st.set_page_config(page_title="Realtime Activity Mapping", page_icon=None, layout="wide",)
@@ -23,11 +25,10 @@ hide_st_style = """
             header {visibility: hidden;}
             </style>
             """
-st.markdown(hide_st_style, unsafe_allow_html=True)
+# st.markdown(hide_st_style, unsafe_allow_html=True)
 
 st.sidebar.image('PDU_Logo.jpg',use_column_width ='never', width=300)
-# @st.experimental_memo
-# @st.cache(allow_output_mutation=True)
+
 def GenerateInputActivity_DB(flag=False):
     if flag:
         InputActivity_DB = pd.read_csv('RealTime_Test/AAE-08_TEST_EDIT.csv', index_col = False)
@@ -71,6 +72,7 @@ def cache_RealTime_Data(well_id, StartDateTime_select, EndDateTime_select):
 
 PageList = [
     "Activity Mapping",
+    "Activity Summary Table",
     "Summary Dashboard",
 ]
 NavBar = st.sidebar.selectbox("Select Module:",PageList)
@@ -125,20 +127,18 @@ except Exception as error_msg:
 if 'SelectDateLogic' not in st.session_state:
 	st.session_state.SelectDateLogic = False
 
+if 'UpdateRTData' not in st.session_state:
+	st.session_state.UpdateRTData = False
+
 if 'StartDateTime_select' not in st.session_state:
 	st.session_state.StartDateTime_select = False
 if 'EndDateTime_select' not in st.session_state:
 	st.session_state.EndDateTime_select = True
-# if 'SelectDateLogic' not in st.session_state:
-# 	st.session_state.SelectDateLogic = False
+
 
 
 with st.sidebar.form(key='DateInput'):
     sideStart_col1,sideStart_col2 = st.columns(2)
-
-    # temp_start
-
-
 
     StartDate = sideStart_col1.date_input('Start Date-Time',value=(Datetime_end - timedelta(days=2)), key='StartDate')
     StartTime = sideStart_col2.time_input('',value=datetime.strptime('00:00:00', '%H:%M:%S'), key='StartTime')
@@ -153,35 +153,24 @@ with st.sidebar.form(key='DateInput'):
     EndTime = sideEnd_col2.time_input('',value=datetime.strptime('00:00:00', '%H:%M:%S'), key='EndTime')
     st.session_state.EndDateTime_select = datetime.combine(EndDate, EndTime)
 
-    # displaySelection = pd.DataFrame.from_dict({"Start Date-Time": [StartDateTime_select], "End Date-Time": [EndDateTime_select]})
-    # temp = st.session_state.SelectDateLogic
     if st.form_submit_button('Select Date'):
         st.session_state.SelectDateLogic = True
-
-
-# print(resulted_form)
-# st.sidebar.table(displaySelection)
-# st.sidebar.button('Get the choosen date', key='SelectDate')
-
-
-# if st.session_state.SelectDate:
-#     st.session_state.SelectDateLogic = True
-
+        st.session_state.UpdateRTData = True
 
 
 if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_state.SelectDateLogic == True)):
     # st.title("Activity Mapping Module")
     st.markdown('<h1 style="text-align: center; font-size: 50px; margin-top: 2px;"><span style="text-decoration: underline;">ACTIVITY MAPPING MODULE</span></h1>', unsafe_allow_html=True)
     try:
-        Activity_DF = cache_RealTime_Data(well_id, st.session_state.StartDateTime_select, st.session_state.EndDateTime_select)
+        if st.session_state.UpdateRTData:
+            st.session_state.Activity_DF = cache_RealTime_Data(well_id, st.session_state.StartDateTime_select, st.session_state.EndDateTime_select)
+            st.session_state.UpdateRTData = False
         error_stop = True
     except:
         st.markdown('<h2 style="text-align: center; font-size: 30px; margin-top: 300px;"><span style="color: #000000;"><em>Inputed Date is Incorrect</em></span></h2>', unsafe_allow_html=True)
         error_stop = False
     if error_stop:
-
-
-
+        Activity_DF = st.session_state.Activity_DF
         with st.form(key='Activity Input:'):
             cols = st.columns(6)
             Date_Temp = cols[0].date_input(
@@ -250,31 +239,14 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
                 ]
 
                 InputActivity_DB.sort_values(by='dt', ascending=True).to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
-                # print([
-                #     Date_Temp,
-                #     Time_Temp,
-                #     Connection_Temp,
-                #     # SubActivity_Temp,
-                #     Activity_Temp,
-                #     HookTreshold_Temp,
-                #     Remarks_Temp,
-                #     PIC_Temp
-                # ])
-                # print(len(InputActivity_DB)) 
-                # st.write('Why hello there')
 
-
-            # with st.container():
 
             InputActivity_DB = pd.read_csv('RealTime_Test/Temp_InputActivity.csv', index_col = False)
             
             Table_col = st.columns(1)
             Table_col[0].markdown('### Activity Log')
             Table_col[0].text('To Do: add delete specific row function, so if the user want to delete specific row, it shouldnt start clearing from the lastest row')
-            Table_1 = Table_col[0].dataframe(InputActivity_DB)
 
-    ###### Perhitungan summary
-            # if FormButton_a:
         Button_col_1 = st.columns(3)
         if Button_col_1[0].button('Clear LastRow', key='refresh'):
 
@@ -293,6 +265,7 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
             # InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
             # InputActivity_DB = GenerateInputActivity_DB(flag=True)
             InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
+        Table_1 = Table_col[0].dataframe(InputActivity_DB)
         try:
             with st.spinner(text="Generate Activity Summary..."):
                 Table_col_2 = st.columns(1)
@@ -327,7 +300,8 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
                 file_name=CompName_Select + "_"+ WellName_Select + '_RT_5second_Data.csv',
                 mime='text/csv',
             )
-        except:
+        except Exception as error_msg:
+            st.text(error_msg)
             st.markdown("<h1 style='text-align: center; font-size: 50px;margin-top: 300px;'>  Select Date First </h1>", unsafe_allow_html=True)
 
     # st.table(SummaryActivity_DF)
@@ -369,5 +343,37 @@ elif NavBar =="Summary Dashboard":
         
             )
         st.plotly_chart(figchart,use_container_width=True)
+elif NavBar =="Activity Summary Table":
+    try:
+        InputActivity_DB = pd.read_csv('RealTime_Test/Temp_InputActivity.csv', index_col = False)
+        ActivitySum_Table = st.dataframe(InputActivity_DB)
+
+
+        gb = GridOptionsBuilder.from_dataframe(InputActivity_DB)
+        gb.configure_selection('multiple', use_checkbox=True)
+        # "Activity Summary Table"
+        gridOptions = gb.build()
+
+        grid_response = AgGrid(
+        InputActivity_DB, 
+        gridOptions=gridOptions,
+        # height=grid_height, 
+        # width='100%',
+        data_return_mode=DataReturnMode.AS_INPUT, 
+        update_mode=GridUpdateMode.SELECTION_CHANGED,
+        # fit_columns_on_grid_load=fit_columns_on_grid_load,
+        # allow_unsafe_jscode=True, #Set it to True to allow jsfunction to be injected
+        # enable_enterprise_modules=enable_enterprise_modules,
+        )
+        # st.text(grid_response)
+        if st.button('print result'):
+            list_selected =[]
+            for dt_temp in grid_response['selected_rows']:
+                list_selected.append(dt_temp['dt'])
+            st.dataframe(InputActivity_DB[~InputActivity_DB['dt'].isin(list_selected)])
+            # st.text(grid_response['selected_rows'])
+
+    except Exception as error_msg:
+        st.text(error_msg)
 else:
     st.markdown("<h1 style='text-align: center; font-size: 130px;margin-top: 300px;'>  Welcome !</h1>", unsafe_allow_html=True)
