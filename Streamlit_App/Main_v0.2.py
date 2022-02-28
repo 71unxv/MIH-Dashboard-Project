@@ -31,13 +31,18 @@ st.sidebar.image('PDU_Logo.jpg',use_column_width ='never', width=300)
 
 def GenerateInputActivity_DB(flag=False):
     if flag:
-        InputActivity_DB = pd.read_csv('RealTime_Test/AAE-08_TEST_EDIT.csv', index_col = False)
+        # print(CompWell_Name)
+        InputActivity_DB = pd.read_csv('RealTime_Test/Temp_InputActivity.csv', index_col = False)
+        InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
+        # print(InputActivity_DB)
+        # InputActivity_DB = InputActivity_DB.loc[InputActivity_DB['Comp-Well']==CompWell_Name,:]
     else:
         InputActivity_DB = pd.DataFrame(
             columns=[
                 'dt',
                 'Date',
                 'Time',
+                'Comp-Well',
                 "Activity",
                 "Hook Treshold",
                 "Remarks",
@@ -69,7 +74,9 @@ def cache_RealTime_Data(well_id, StartDateTime_select, EndDateTime_select):
 
     return Activity_DF
 
-
+def UpdateWellData():
+    st.session_state.SelectDateLogic = True
+    # return
 PageList = [
     "Activity Mapping",
     "Activity Summary Table",
@@ -105,8 +112,12 @@ else:
 
     WellList = WellName_DF['well_name'].to_list()
 
-WellName_Select = st.sidebar.selectbox("Select Well",WellList)
 
+# temp_wellname = st.session_state.WellNameSelect
+WellName_Select = st.sidebar.selectbox("Select Well",WellList, key='WellNameSelect')
+
+CompWell_Name = CompName_Select + '-' + WellName_Select
+# print(CompWell_Name)
 # twoday_dt_temp = 
 try:
     Datetime_start = (WellName_DF.loc[WellName_DF['well_name']==WellName_Select, 'active_date']).to_list()[0]
@@ -157,12 +168,13 @@ with st.sidebar.form(key='DateInput'):
         st.session_state.SelectDateLogic = True
         st.session_state.UpdateRTData = True
 
-
+print(st.session_state.SelectDateLogic)
 if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_state.SelectDateLogic == True)):
     # st.title("Activity Mapping Module")
     st.markdown('<h1 style="text-align: center; font-size: 50px; margin-top: 2px;"><span style="text-decoration: underline;">ACTIVITY MAPPING MODULE</span></h1>', unsafe_allow_html=True)
     try:
         if st.session_state.UpdateRTData:
+            st.session_state.UpdateRTData = None
             st.session_state.Activity_DF = cache_RealTime_Data(well_id, st.session_state.StartDateTime_select, st.session_state.EndDateTime_select)
             st.session_state.UpdateRTData = False
         error_stop = True
@@ -171,6 +183,9 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
         error_stop = False
     if error_stop:
         Activity_DF = st.session_state.Activity_DF
+        InputActivity_DB = GenerateInputActivity_DB(flag=True)
+        # InputActivity_DB = pd.read_csv('RealTime_Test/Temp_InputActivity.csv', index_col = False)
+
         with st.form(key='Activity Input:'):
             cols = st.columns(6)
             Date_Temp = cols[0].date_input(
@@ -232,77 +247,141 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
                     (datetime.combine(Date_Temp, Time_Temp)),
                     str(Date_Temp),
                     str(Time_Temp),
+                    CompWell_Name,
                     Activity_Temp,
                     HookTreshold_Temp,
                     Remarks_Temp,
                     PIC_Temp
                 ]
 
+                InputActivity_DB = InputActivity_DB.sort_values(by='dt', ascending=True)    
                 InputActivity_DB.sort_values(by='dt', ascending=True).to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
 
 
-            InputActivity_DB = pd.read_csv('RealTime_Test/Temp_InputActivity.csv', index_col = False)
             
             Table_col = st.columns(1)
             Table_col[0].markdown('### Activity Log')
             Table_col[0].text('To Do: add delete specific row function, so if the user want to delete specific row, it shouldnt start clearing from the lastest row')
 
-        Button_col_1 = st.columns(3)
-        if Button_col_1[0].button('Clear LastRow', key='refresh'):
+        # General = st.columns(1)
+            
+        # print('tes')
+        gb = GridOptionsBuilder.from_dataframe(InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
+        gb.configure_selection('multiple', use_checkbox=True)
+        gridOptions = gb.build()
 
-            InputActivity_DB = InputActivity_DB[:-1]
-            InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
+
+        InputActivityGrid_response = AgGrid(
+                InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name], 
+                gridOptions=gridOptions,
+                data_return_mode=DataReturnMode.AS_INPUT, 
+                update_mode=(GridUpdateMode.SELECTION_CHANGED),
+                
+        )
+
+        Button_col_1 = st.columns(3)
+        if Button_col_1[0].button('Clear Selected Row', key='refresh'):
+            list_selected =[]
+            for dt_temp in InputActivityGrid_response['selected_rows']:
+                list_selected.append(dt_temp['dt'])
+                # print(list_selected)
+
+
+            InputActivity_DB = InputActivity_DB.drop(InputActivity_DB.index[(InputActivity_DB['dt'].isin(list_selected)) & (InputActivity_DB['Comp-Well']==CompWell_Name)])
+            InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
+            InputActivity_DB.sort_values(by='dt', ascending=True).to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
+            InputActivity_DB = GenerateInputActivity_DB(flag=True)
+
+
+            
 
         if Button_col_1[1].button('LOAD AAE-08', key='AAE08'):
 
-            # InputActivity_DB = InputActivity_DB[:-1]
-            # InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
-            InputActivity_DB = GenerateInputActivity_DB(flag=True)
+            
+            InputActivity_DB = pd.read_csv('RealTime_Test/AAE-08_TEST_EDIT.csv', index_col = False)
+            InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
             InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
-        if Button_col_1[2].button('clear AAE-08', key='AAE08'):
+        if Button_col_1[2].button('clear All', key='AAE08'):
 
             InputActivity_DB = InputActivity_DB[1:1]
-            # InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
-            # InputActivity_DB = GenerateInputActivity_DB(flag=True)
+
             InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
-        Table_1 = Table_col[0].dataframe(InputActivity_DB)
-        try:
-            with st.spinner(text="Generate Activity Summary..."):
-                Table_col_2 = st.columns(1)
-                Activity_DF = Activity.GetActivity_DF(Activity_DF, InputActivity_DB)
-                Activity_DF = Activity.GetSubActivity_DF_v3(Activity_DF)
+
+
+
+        # st.dataframe(InputActivity_DB)
+        # st.text(InputActivity_DB.columns)
+        # st.text(InputActivity_DB.dtypes)
+        # try:
+        with st.spinner(text="Generate Activity Summary..."):
+            Table_col_2 = st.columns(1)
+            InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
+            # print("--")
+            # print(Activity_DF.head(10))
+            # print(InputActivity_DB.dtypes)
+            # print(Activity_DF.dtypes)
+            # st.dataframe(Activity_DF)
+            # st.dataframe(InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
+            Activity_DF = Activity.GetActivity_DF(Activity_DF, InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
+            # st.dataframe(Activity_DF)
+            # st.dataframe(InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
+            # print(Activity_DF.columns)
+            # print("-GetActivity")
+            # print(Activity_DF.dtypes)
+            # print(Activity_DF.head(10))
+            # print('activity')
+            # st.dataframe(Activity_DF)
+            Activity_DF = Activity.GetSubActivity_DF_v3(Activity_DF)
+            # print(Activity_DF.dtypes)
+            # print(Activity_DF.head(10))
+            # print("-GetSubActivity")
+            # print('Subactivity')
+        
+            SummaryActivity_DF = Activity.GenerateDuration_DF_v2(Activity_DF)
+
+
+
             
-                SummaryActivity_DF = Activity.GenerateDuration_DF_v2(Activity_DF)
+            Table_col_2[0].markdown('### Activity Summary Table')
+            Table_col_2[0].text('To Do: ')
+            Table_col_2[0].text('        -add aditional module/function to download the All Date summary Activity Table')
+            Table_col_2[0].text('        -user can only edit/create activity log for specific well only, not general wells')
+            # Table_2 = Table_col_2[0].dataframe(SummaryActivity_DF)
+
+            gb_2 = GridOptionsBuilder.from_dataframe(SummaryActivity_DF)
+            # gb_2.configure_selection('multiple', use_checkbox=True)
+            gridOptions = gb_2.build()
 
 
-
-                
-                Table_col_2[0].markdown('### Activity Summary Table')
-                Table_col_2[0].text('To Do: ')
-                Table_col_2[0].text('        -add aditional module/function to download the All Date summary Activity Table')
-                Table_col_2[0].text('        -user can only edit/create activity log for specific well only, not general wells')
-                Table_2 = Table_col_2[0].dataframe(SummaryActivity_DF)
-                
-
-                # st.table(Activity_DF.head(20))
-
-                # csv = convert_df(my_large_df)
-            # if FormButton_a:
-            st.download_button(
-                label="Download Summary data as CSV",
-                data=convert_df(SummaryActivity_DF),
-                file_name=CompName_Select + "_"+ WellName_Select + '_ActivitySummary.csv',
-                mime='text/csv',
+            SummaryActivityGrid_response = AgGrid(
+                    SummaryActivity_DF, 
+                    gridOptions=gridOptions,
+                    # data_return_mode=DataReturnMode.AS_INPUT, 
+                    # update_mode=(GridUpdateMode.SELECTION_CHANGED),
+                    
             )
-            st.download_button(
-                label="Download Realtime(5second) data as CSV",
-                data=convert_df(Activity_DF),
-                file_name=CompName_Select + "_"+ WellName_Select + '_RT_5second_Data.csv',
-                mime='text/csv',
-            )
-        except Exception as error_msg:
-            st.text(error_msg)
-            st.markdown("<h1 style='text-align: center; font-size: 50px;margin-top: 300px;'>  Select Date First </h1>", unsafe_allow_html=True)
+            
+
+            # st.table(Activity_DF.head(20))
+
+            # csv = convert_df(my_large_df)
+        # if FormButton_a:
+        st.download_button(
+            label="Download Summary data as CSV",
+            data=convert_df(SummaryActivity_DF),
+            file_name=CompName_Select + "_"+ WellName_Select + '_ActivitySummary.csv',
+            mime='text/csv',
+        )
+        st.download_button(
+            label="Download Realtime(5second) data as CSV",
+            data=convert_df(Activity_DF),
+            file_name=CompName_Select + "_"+ WellName_Select + '_RT_5second_Data.csv',
+            mime='text/csv',
+        )
+        # except Exception as error_msg:
+        #     st.text(error_msg)
+
+        #     st.markdown("<h1 style='text-align: center; font-size: 50px;margin-top: 300px;'>  Select Date First </h1>", unsafe_allow_html=True)
 
     # st.table(SummaryActivity_DF)
 
@@ -345,33 +424,27 @@ elif NavBar =="Summary Dashboard":
         st.plotly_chart(figchart,use_container_width=True)
 elif NavBar =="Activity Summary Table":
     try:
-        InputActivity_DB = pd.read_csv('RealTime_Test/Temp_InputActivity.csv', index_col = False)
+        # InputActivity_DB = pd.read_csv('RealTime_Test/Temp_InputActivity.csv', index_col = False)
+        InputActivity_DB = GenerateInputActivity_DB(flag=True)
         ActivitySum_Table = st.dataframe(InputActivity_DB)
 
 
         gb = GridOptionsBuilder.from_dataframe(InputActivity_DB)
         gb.configure_selection('multiple', use_checkbox=True)
-        # "Activity Summary Table"
         gridOptions = gb.build()
-
         grid_response = AgGrid(
-        InputActivity_DB, 
-        gridOptions=gridOptions,
-        # height=grid_height, 
-        # width='100%',
-        data_return_mode=DataReturnMode.AS_INPUT, 
-        update_mode=GridUpdateMode.SELECTION_CHANGED,
-        # fit_columns_on_grid_load=fit_columns_on_grid_load,
-        # allow_unsafe_jscode=True, #Set it to True to allow jsfunction to be injected
-        # enable_enterprise_modules=enable_enterprise_modules,
+            InputActivity_DB, 
+            gridOptions=gridOptions,
+            data_return_mode=DataReturnMode.AS_INPUT, 
+            update_mode=(GridUpdateMode.SELECTION_CHANGED),
         )
-        # st.text(grid_response)
+
         if st.button('print result'):
             list_selected =[]
             for dt_temp in grid_response['selected_rows']:
                 list_selected.append(dt_temp['dt'])
             st.dataframe(InputActivity_DB[~InputActivity_DB['dt'].isin(list_selected)])
-            # st.text(grid_response['selected_rows'])
+
 
     except Exception as error_msg:
         st.text(error_msg)

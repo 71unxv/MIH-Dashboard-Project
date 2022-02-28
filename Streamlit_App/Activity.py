@@ -348,28 +348,32 @@ def GenerateDuration_DF(RealTime_DB):
 
 def GetActivity_DF(Activity_DF, InputActivity_DB):
     ii = 0
+    InputActivity_DB = InputActivity_DB.reset_index()
     # print('test')
-    
+
     for i,row in InputActivity_DB.iterrows():
         # if ii<InputActivity_DB.shape[1]:
         try:
-            start_time_temp = InputActivity_DB.iloc[ii, 0]
-            end_time_temp = InputActivity_DB.iloc[ii+1, 0]
+            start_time_temp = InputActivity_DB.loc[ii, 'dt']
+            end_time_temp = InputActivity_DB.loc[ii+1, 'dt']
             # print(InputActivity_DB.iloc[ii+1, 0])
             idx_logic = (Activity_DF['dt'] >= start_time_temp) & (Activity_DF['dt'] < end_time_temp)
         except:
-            start_time_temp = InputActivity_DB.iloc[ii, 0]
-            print(InputActivity_DB.iloc[ii, 0])
-            print('test')
+            start_time_temp = InputActivity_DB.loc[ii, 'dt']
+            # print(InputActivity_DB.iloc[ii, 0])
+            # print('test')
             # end_time_temp = InputActivity_DB.loc[ii+1, 'dt']
             idx_logic = (Activity_DF['dt'] >= start_time_temp)
             
 
-        activity_label_temp = InputActivity_DB.iloc[ii, 3]
-        print(idx_logic)
-        Activity_DF.loc[idx_logic, "Activity"] = activity_label_temp
-        activity_label_temp = InputActivity_DB.iloc[ii, 4]
-        Activity_DF.loc[idx_logic, "Hookload Treshold"] = activity_label_temp
+        activity_label_temp = InputActivity_DB.loc[ii, 'Activity']
+        # print(idx_logic)
+        # print('----')
+        Activity_DF.loc[idx_logic, ("Activity")] = activity_label_temp
+        # print(InputActivity_DB)
+        activity_label_temp = InputActivity_DB.loc[ii, 'Hook Treshold']
+        # print(Activity_DF)
+        Activity_DF.loc[idx_logic, ("Hookload Treshold")] = activity_label_temp
         ii = ii+1
     
     return Activity_DF
@@ -482,7 +486,7 @@ def GenerateDuration_DF_v2(RealTime_DB):
             'Stand Duration',
     ]
     for ColumnName in listSetDecimals:
-        print(ColumnName)
+        # print(ColumnName)
         Duration_DB[ColumnName] = Duration_DB[ColumnName].round(decimals=2)
 
     # rounded_df = df.round(decimals=2)
@@ -769,7 +773,7 @@ def GenerateDuration_DF_v3(RealTime_DB):
             'Stand Duration',
     ]
     for ColumnName in listSetDecimals:
-        print(ColumnName)
+        # print(ColumnName)
         Duration_DB[ColumnName] = Duration_DB[ColumnName].round(decimals=2)
 
     # rounded_df = df.round(decimals=2)
@@ -778,6 +782,30 @@ def GenerateDuration_DF_v3(RealTime_DB):
 
 
 def GetSubActivity_DF_v3(Activity_DF):
+    Activity_DF = Activity_DF.astype(
+        {
+            "dt":"datetime64",
+            # "date":"object",
+            # "time":"object",
+            "bitdepth":"float64",
+            "md":"float64",
+            "blockpos":"float64",
+            "rop":"float64",
+            "hklda":"float64",
+            "woba":"float64",
+            "torqa":"float64",
+            "rpm":"float64",
+            "stppress":"float64",
+            "mudflowin":"float64",
+            # "Activity":"object",
+            "Hookload Treshold":"float64",
+            # "SubActivity":"object",
+            # "logic_status":"int64",
+            # "isBitDepthMoving":"bool",
+            # "LABEL_All":"object",
+        }
+    )
+    
     logic_status = 0
     Activity_DF["SubActivity"] = "FALSE/Check"
     Activity_DF["logic_status"] = logic_status
