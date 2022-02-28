@@ -134,7 +134,11 @@ except Exception as error_msg:
     print(error_msg)
     # None
 
-
+PageList = [
+    "Activity Mapping",
+    "Summary Dashboard",
+]
+NavBar = st.sidebar.selectbox("Select Module:",PageList)
 if 'SelectDateLogic' not in st.session_state:
 	st.session_state.SelectDateLogic = False
 
@@ -385,31 +389,6 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
 
     # st.table(SummaryActivity_DF)
 
-elif NavBar =="Summary Dashboard":
-    ChartColumn = st.columns((5,5))
-    with ChartColumn[0]:
-        Activity_DB = pd.read_csv("RealTime_Test/AAE-03_Activity_DB.csv")
-        PieChart_DF = Activity_DB.groupby('LABEL_SubActivity')['Duration(minutes)'].sum()
-
-    # Initialize figure with subplots
-        figchart = make_subplots(
-            rows=2, cols=2,
-            # column_widths=[0.2, 0.2,0.2, 0.1, 0.1, 0.1, 0.1],
-            # row_heights=[0.4, 0.6],
-            specs=[
-                    [{"type": "pie"}, 
-                    {"type": "scatter"},
-                    ],
-
-                    [ 
-                    {"type": "bar"},
-                    {"type": "bar"},
-                    ]
-                ],
-            # shared_yaxes=True,
-            # horizontal_spacing=0.01,
-            # subplot_titles = ['gadfdfs1','asd2','asd3'],
-            )
 
         figchart.add_trace(
                 go.Pie(
