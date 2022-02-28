@@ -138,7 +138,7 @@ PageList = [
     "Activity Mapping",
     "Summary Dashboard",
 ]
-NavBar = st.sidebar.selectbox("Select Module:",PageList)
+# NavBar = st.sidebar.selectbox("Select Module:",PageList)
 if 'SelectDateLogic' not in st.session_state:
 	st.session_state.SelectDateLogic = False
 
@@ -316,76 +316,76 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
         # st.dataframe(InputActivity_DB)
         # st.text(InputActivity_DB.columns)
         # st.text(InputActivity_DB.dtypes)
-        # try:
-        with st.spinner(text="Generate Activity Summary..."):
-            Table_col_2 = st.columns(1)
-            InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
-            # print("--")
-            # print(Activity_DF.head(10))
-            # print(InputActivity_DB.dtypes)
-            # print(Activity_DF.dtypes)
-            # st.dataframe(Activity_DF)
-            # st.dataframe(InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
-            Activity_DF = Activity.GetActivity_DF(Activity_DF, InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
-            # st.dataframe(Activity_DF)
-            # st.dataframe(InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
-            # print(Activity_DF.columns)
-            # print("-GetActivity")
-            # print(Activity_DF.dtypes)
-            # print(Activity_DF.head(10))
-            # print('activity')
-            # st.dataframe(Activity_DF)
-            Activity_DF = Activity.GetSubActivity_DF_v3(Activity_DF)
-            # print(Activity_DF.dtypes)
-            # print(Activity_DF.head(10))
-            # print("-GetSubActivity")
-            # print('Subactivity')
-        
-            SummaryActivity_DF = Activity.GenerateDuration_DF_v3(Activity_DF)
-
-
-
+        try:
+            with st.spinner(text="Generate Activity Summary..."):
+                Table_col_2 = st.columns(1)
+                InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
+                # print("--")
+                # print(Activity_DF.head(10))
+                # print(InputActivity_DB.dtypes)
+                # print(Activity_DF.dtypes)
+                # st.dataframe(Activity_DF)
+                # st.dataframe(InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
+                Activity_DF = Activity.GetActivity_DF(Activity_DF, InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
+                # st.dataframe(Activity_DF)
+                # st.dataframe(InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
+                # print(Activity_DF.columns)
+                # print("-GetActivity")
+                # print(Activity_DF.dtypes)
+                # print(Activity_DF.head(10))
+                # print('activity')
+                # st.dataframe(Activity_DF)
+                Activity_DF = Activity.GetSubActivity_DF_v3(Activity_DF)
+                # print(Activity_DF.dtypes)
+                # print(Activity_DF.head(10))
+                # print("-GetSubActivity")
+                # print('Subactivity')
             
-            Table_col_2[0].markdown('### Activity Summary Table')
-            Table_col_2[0].text('To Do: ')
-            Table_col_2[0].text('        -add aditional module/function to download the All Date summary Activity Table')
-            Table_col_2[0].text('        -user can only edit/create activity log for specific well only, not general wells')
-            # Table_2 = Table_col_2[0].dataframe(SummaryActivity_DF)
-
-            gb_2 = GridOptionsBuilder.from_dataframe(SummaryActivity_DF)
-            # gb_2.configure_selection('multiple', use_checkbox=True)
-            gridOptions = gb_2.build()
+                SummaryActivity_DF = Activity.GenerateDuration_DF_v2(Activity_DF)
 
 
-            SummaryActivityGrid_response = AgGrid(
-                    SummaryActivity_DF, 
-                    gridOptions=gridOptions,
-                    # data_return_mode=DataReturnMode.AS_INPUT, 
-                    # update_mode=(GridUpdateMode.SELECTION_CHANGED),
-                    
+
+                
+                Table_col_2[0].markdown('### Activity Summary Table')
+                Table_col_2[0].text('To Do: ')
+                Table_col_2[0].text('        -add aditional module/function to download the All Date summary Activity Table')
+                Table_col_2[0].text('        -user can only edit/create activity log for specific well only, not general wells')
+                # Table_2 = Table_col_2[0].dataframe(SummaryActivity_DF)
+
+                gb_2 = GridOptionsBuilder.from_dataframe(SummaryActivity_DF)
+                # gb_2.configure_selection('multiple', use_checkbox=True)
+                gridOptions = gb_2.build()
+
+
+                SummaryActivityGrid_response = AgGrid(
+                        SummaryActivity_DF, 
+                        gridOptions=gridOptions,
+                        # data_return_mode=DataReturnMode.AS_INPUT, 
+                        # update_mode=(GridUpdateMode.SELECTION_CHANGED),
+                        
+                )
+                
+
+                # st.table(Activity_DF.head(20))
+
+                # csv = convert_df(my_large_df)
+            # if FormButton_a:
+            st.download_button(
+                label="Download Summary data as CSV",
+                data=convert_df(SummaryActivity_DF),
+                file_name=CompName_Select + "_"+ WellName_Select + '_ActivitySummary.csv',
+                mime='text/csv',
             )
-            
+            st.download_button(
+                label="Download Realtime(5second) data as CSV",
+                data=convert_df(Activity_DF),
+                file_name=CompName_Select + "_"+ WellName_Select + '_RT_5second_Data.csv',
+                mime='text/csv',
+            )
+        except Exception as error_msg:
+            st.text(error_msg)
 
-            # st.table(Activity_DF.head(20))
-
-            # csv = convert_df(my_large_df)
-        # if FormButton_a:
-        st.download_button(
-            label="Download Summary data as CSV",
-            data=convert_df(SummaryActivity_DF),
-            file_name=CompName_Select + "_"+ WellName_Select + '_ActivitySummary.csv',
-            mime='text/csv',
-        )
-        st.download_button(
-            label="Download Realtime(5second) data as CSV",
-            data=convert_df(Activity_DF),
-            file_name=CompName_Select + "_"+ WellName_Select + '_RT_5second_Data.csv',
-            mime='text/csv',
-        )
-        # except Exception as error_msg:
-        #     st.text(error_msg)
-
-        #     st.markdown("<h1 style='text-align: center; font-size: 50px;margin-top: 300px;'>  Select Date First </h1>", unsafe_allow_html=True)
+            st.markdown("<h1 style='text-align: center; font-size: 50px;margin-top: 300px;'>  Select Date First </h1>", unsafe_allow_html=True)
 
     # st.table(SummaryActivity_DF)
 
