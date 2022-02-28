@@ -56,6 +56,8 @@ def GetDrillingActivity_v2():
 
 
 
+
+
 # Hookload = Hookload
 # E3 = bitdepth_current
 # E4 = bitdepth_future
