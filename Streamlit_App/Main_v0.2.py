@@ -286,7 +286,8 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
             
             Table_col = st.columns(1)
             Table_col[0].markdown('### Activity Log')
-            Table_col[0].text('solve Aggrid reloading')
+            Table_col[0].text('To Do')
+            Table_col[0].text('- solve Aggrid reloading')
 
         # General = st.columns(1)
             
@@ -339,8 +340,8 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
                 InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
                 InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
                 print('uploaded')
-            else:
-                st.text('File Uploaded have incorrect format')
+            # else:
+            #     st.text('File Uploaded have incorrect format')
             if st.button('submit', key='UserSubmit'):
                 st.session_state.FileUploadLogic = True
 
