@@ -56,7 +56,7 @@ def GenerateInputActivity_DB(flag=False):
 @st.cache
 def convert_df(df):
      # IMPORTANT: Cache the conversion to prevent computation on every rerun
-    return df.to_csv().encode('utf-8')
+    return df.to_csv(index = False).encode('utf-8')
 
 @st.cache(allow_output_mutation=True)
 def cache_RealTime_Data(well_id, StartDateTime_select, EndDateTime_select):
@@ -134,13 +134,15 @@ except Exception as error_msg:
     print(error_msg)
     # None
 
-PageList = [
-    "Activity Mapping",
-    "Summary Dashboard",
-]
-NavBar = st.sidebar.selectbox("Select Module:",PageList)
+# PageList = [
+#     "Activity Mapping",
+#     "Summary Dashboard",
+# ]
+# NavBar = st.sidebar.selectbox("Select Module:",PageList)
 if 'SelectDateLogic' not in st.session_state:
 	st.session_state.SelectDateLogic = False
+if 'FileUploadLogic' not in st.session_state:
+	st.session_state.FileUploadLogic = False
 
 if 'UpdateRTData' not in st.session_state:
 	st.session_state.UpdateRTData = False
@@ -247,6 +249,25 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
 
                 # print(InputActivity_DB)
                 InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
+                # columns=[
+                # 'dt',
+                # 'Date',
+                # 'Time',
+                # 'Comp-Well',
+                # "Activity",
+                # "Hook Treshold",
+                # "Remarks",
+                # "PIC"
+                # ]
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'dt'] = (datetime.combine(Date_Temp, Time_Temp))
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'Date'] = str(Date_Temp)
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'Time'] = str(Time_Temp)
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'Comp-Well'] = CompWell_Name
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'Activity'] = Activity_Temp
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'Hook Treshold'] = HookTreshold_Temp
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'Remarks'] = Remarks_Temp
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'PIC'] = PIC_Temp
+
                 InputActivity_DB.loc[len(InputActivity_DB.index)] = [
                     (datetime.combine(Date_Temp, Time_Temp)),
                     str(Date_Temp),
@@ -311,7 +332,21 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
 
             InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
 
+        with st.expander("Upload Your Data"):
+            UploadUser = st.file_uploader('ManualUpload', type={'csv', 'txt'} , disabled=st.session_state.FileUploadLogic)
+            if UploadUser is not None:
+                InputActivity_DB = pd.read_csv(UploadUser, index_col = False)
+                InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
+                InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
+                print('uploaded')
+            else:
+                st.text('File Uploaded have incorrect format')
+            if st.button('submit', key='UserSubmit'):
+                st.session_state.FileUploadLogic = True
 
+
+            # InputActivity_DB = pd.read_csv('RealTime_Test/AAE-08_TEST_EDIT.csv', index_col = False)
+            # spectra = st.file_uploader("upload file", type={"csv", "txt"})
 
         # st.dataframe(InputActivity_DB)
         # st.text(InputActivity_DB.columns)
@@ -380,6 +415,12 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
             label="Download Realtime(5second) data as CSV",
             data=convert_df(Activity_DF),
             file_name=CompName_Select + "_"+ WellName_Select + '_RT_5second_Data.csv',
+            mime='text/csv',
+        )
+        st.download_button(
+            label="Download ActivityLog data as CSV",
+            data=convert_df(InputActivity_DB),
+            file_name=CompName_Select + "_"+ WellName_Select + '_InputActivityDB.csv',
             mime='text/csv',
         )
         # except Exception as error_msg:

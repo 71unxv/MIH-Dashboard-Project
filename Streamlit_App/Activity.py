@@ -1035,7 +1035,11 @@ def GenerateDuration_DF_v3(RealTime_DB):
         StandDuration = 0
 
 
-        if LABEL_Activity == 'DRILLING FORMATION':
+        if LABEL_Activity in ["DRILLING FORMATION", 
+                                'CIRCULATE HOLE CLEANING',
+                                'CONNECTION',
+                                'DRILL OUT CEMENT'
+                                ]:
             if LABEL_SubActivity == "Rotary Drilling":
                 RotateDrilling = Duration
 
@@ -1046,6 +1050,8 @@ def GenerateDuration_DF_v3(RealTime_DB):
                 ReamingTime = Duration
             if LABEL_SubActivity == "Connection":
                 ConnectionTime = Duration
+
+            MeterageDrilling = round((DF_Temp['md'].max()-DF_Temp['md'].min()),2)
 
         list_dict_out.append(
             {
