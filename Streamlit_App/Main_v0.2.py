@@ -376,7 +376,7 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
             # print("-GetSubActivity")
             # print('Subactivity')
             RadioButton = Table_col_2[0].radio("RAW Data?",
-                            ('Raw', 'Cleaned'), key='Cleaned'
+                            ('Cleaned', 'Raw'), key='RadioButton'
                             )
 
             if RadioButton=='Raw':
