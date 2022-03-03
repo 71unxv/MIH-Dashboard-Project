@@ -286,7 +286,7 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
             
             Table_col = st.columns(1)
             Table_col[0].markdown('### Activity Log')
-            Table_col[0].text('To Do: add delete specific row function, so if the user want to delete specific row, it shouldnt start clearing from the lastest row')
+            Table_col[0].text('solve Aggrid reloading')
 
         # General = st.columns(1)
             
@@ -375,8 +375,15 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
             # print(Activity_DF.head(10))
             # print("-GetSubActivity")
             # print('Subactivity')
-        
-            SummaryActivity_DF = Activity.GenerateDuration_DF_v3(Activity_DF)
+            RadioButton = Table_col_2[0].radio("RAW Data?",
+                            ('Raw', 'Cleaned'), key='Cleaned'
+                            )
+
+            if RadioButton=='Raw':
+                SummaryActivity_DF = Activity.GenerateDuration_DF_v3(Activity_DF)
+            else:
+                SummaryActivity_DF = Activity.labelStand(Activity.cleanFalseSensor((Activity.GenerateDuration_DF_v3(Activity_DF))))
+                # Activity.GenerateDuration_DF_v3(Activity_DF)
 
 
 
@@ -384,7 +391,9 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
             Table_col_2[0].markdown('### Activity Summary Table')
             Table_col_2[0].text('To Do: ')
             Table_col_2[0].text('        -add aditional module/function to download the All Date summary Activity Table')
+            Table_col_2[0].text('        -add aditional module/function edit the activity summary table')
             Table_col_2[0].text('        -user can only edit/create activity log for specific well only, not general wells')
+
             # Table_2 = Table_col_2[0].dataframe(SummaryActivity_DF)
 
             gb_2 = GridOptionsBuilder.from_dataframe(SummaryActivity_DF)

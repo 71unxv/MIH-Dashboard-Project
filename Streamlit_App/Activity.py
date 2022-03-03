@@ -1111,3 +1111,166 @@ def GenerateDuration_DF_v3(RealTime_DB):
 
     # rounded_df = df.round(decimals=2)
     return Duration_DB
+
+
+
+
+def cleanFalseSensor(MasterReport_DF_Web):
+    MasterReport_DF_Web = MasterReport_DF_Web.reset_index(drop=True)
+    # while ("FALSE/Check" in MasterReport_DF_Web['LABEL_SubActivity'].values) or ("Look and define" in MasterReport_DF_Web['LABEL_SubActivity'].values):
+    idx_same = MasterReport_DF_Web.index[MasterReport_DF_Web['LABEL_SubActivity']=="Look and define"]
+    idx_before = idx_same - 1
+
+    idx_same = idx_same[idx_before>0]
+    idx_before = idx_before[idx_before>0]
+    
+    MasterReport_DF_Web.loc[idx_same, 'LABEL_SubActivity'] = MasterReport_DF_Web.loc[idx_before, 'LABEL_SubActivity'].values
+    MasterReport_DF_Web['MERGE_SubActivity-Activity'] = MasterReport_DF_Web['LABEL_Activity'] + "--"+MasterReport_DF_Web['LABEL_SubActivity']
+
+    idx_same = MasterReport_DF_Web.index[MasterReport_DF_Web['LABEL_SubActivity']=="FALSE/Check"]
+    # print(idx_same)
+    idx_before = idx_same - 1
+
+    idx_same = idx_same[idx_before>0]
+    # print(idx_same)
+    idx_before = idx_before[idx_before>0]
+    # print(idx_before)
+    
+    MasterReport_DF_Web.loc[idx_same, 'LABEL_SubActivity'] = MasterReport_DF_Web.loc[idx_before, 'LABEL_SubActivity'].values
+    MasterReport_DF_Web['MERGE_SubActivity-Activity'] = MasterReport_DF_Web['LABEL_Activity'] + "--"+MasterReport_DF_Web['LABEL_SubActivity']
+
+
+    idx_same = MasterReport_DF_Web.index[MasterReport_DF_Web['LABEL_SubActivity']=="FALSE/Check"]
+    idx_before = idx_same - 1
+
+    idx_same = idx_same[idx_before>0]
+    idx_before = idx_before[idx_before>0]
+    
+    MasterReport_DF_Web.loc[idx_same, 'LABEL_SubActivity'] = MasterReport_DF_Web.loc[idx_before, 'LABEL_SubActivity'].values
+    MasterReport_DF_Web['MERGE_SubActivity-Activity'] = MasterReport_DF_Web['LABEL_Activity'] + "--"+MasterReport_DF_Web['LABEL_SubActivity']
+
+    idx_same = MasterReport_DF_Web.index[MasterReport_DF_Web['LABEL_SubActivity']=="Look and define"]
+    # print(idx_same)
+    idx_before = idx_same - 1
+
+    idx_same = idx_same[idx_before>0]
+    # print(idx_same)
+    idx_before = idx_before[idx_before>0]
+    # print(idx_before)
+    
+    MasterReport_DF_Web.loc[idx_same, 'LABEL_SubActivity'] = MasterReport_DF_Web.loc[idx_before, 'LABEL_SubActivity'].values
+    MasterReport_DF_Web['MERGE_SubActivity-Activity'] = MasterReport_DF_Web['LABEL_Activity'] + "--"+MasterReport_DF_Web['LABEL_SubActivity']
+
+
+    MasterReport_DF_Web = MasterReport_DF_Web.groupby((MasterReport_DF_Web['MERGE_SubActivity-Activity'].shift() != MasterReport_DF_Web['MERGE_SubActivity-Activity']).cumsum(), as_index=False).agg(
+        {
+            'date':'max',
+            'Time_start':'min',
+            'Time_end':'max',
+            'date_time':'min',
+            'Duration(minutes)':'sum',
+            'Hole Depth(max)':'max',
+            'Bit Depth(mean)': 'mean',
+
+            'Meterage(m)(Drilling)':'sum',
+            'RotateDrilling':'sum',
+            'Slide Drilling':'sum',
+            'ReamingTime':'sum',
+            'ConnectionTime':'sum',
+            'On Bottom Hours':'sum',
+            'Stand Duration':'sum',
+            'LABEL_SubActivity':'first',
+            'LABEL_Activity':'first',
+            'MERGE_SubActivity-Activity':'first'
+        }
+    )
+    # list_col = [
+    #         # 'Meterage(m)(Drilling)',
+    #         'RotateDrilling',
+    #         'Slide Drilling',
+    #         'ReamingTime',
+    #         # 'ConnectionTime',
+    #         # 'On Bottom Hours',
+    #         # 'Stand Duration'
+    # ]
+    # for ColName in list_col:
+    idx_temp = MasterReport_DF_Web['LABEL_SubActivity']=='RotateDrilling'
+    MasterReport_DF_Web.loc[idx_temp,'RotateDrilling'] = MasterReport_DF_Web.loc[idx_temp,'Duration(minutes)'].values 
+
+    idx_temp = MasterReport_DF_Web['LABEL_SubActivity']=='Slide Drilling'
+    MasterReport_DF_Web.loc[idx_temp,'Slide Drilling'] = MasterReport_DF_Web.loc[idx_temp,'Duration(minutes)'].values 
+
+    idx_temp = MasterReport_DF_Web['LABEL_SubActivity']=='ReamingTime'
+    MasterReport_DF_Web.loc[idx_temp,'ReamingTime'] = MasterReport_DF_Web.loc[idx_temp,'Duration(minutes)'].values 
+
+    return MasterReport_DF_Web
+
+def labelStand(MasterReport_DF):
+    # date
+    # Time_start
+    # Time_end
+    # date_time
+    # Duration(minutes)
+    # Hole Depth(max)
+    # Bit Depth(mean)
+    # Meterage(m)(Drilling)
+    # RotateDrilling
+    # Slide Drilling
+    # ReamingTime
+    # ConnectionTime
+    # On Bottom Hours
+    # Stand Duration
+    # LABEL_SubActivity
+    # LABEL_Activity
+    # MasterReport_DF = pd.read_excel('Data\\Master_Report\\MasterReportTest.xlsx')
+    # print(MasterReport_DF.dtypes)
+    MasterReport_DF['Stand Meterage (m) (Drilling)'] = np.NaN
+    MasterReport_DF['Stand Stand Duration (hrs)'] = np.NaN
+    MasterReport_DF['Stand On Bottom Hours'] = np.NaN
+    MasterReport_DF = MasterReport_DF.astype(
+            {
+                'Duration(minutes)':'float',
+                'Hole Depth(max)':'float',
+                'Bit Depth(mean)':'float',
+                "Meterage(m)(Drilling)":'float',
+                "Stand Meterage (m) (Drilling)":'float',
+                "RotateDrilling":'float',
+                'Slide Drilling':'float',
+                'ReamingTime':'float',
+                'ConnectionTime':'float',
+                'On Bottom Hours':'float',
+                'Stand On Bottom Hours':'float',
+                'Stand Duration':'float',
+                'Stand Stand Duration (hrs)':'float',
+
+            }
+    )
+    MasterReport_DF = MasterReport_DF.reset_index(drop=True).fillna(0)
+
+    ii = 0
+    for idx,row in MasterReport_DF[(MasterReport_DF['LABEL_SubActivity']=='Connection')].iterrows():
+        # print(idx)
+        if ii==0:
+
+            idx_start = idx + 1
+
+        else:
+            idx_end = idx - 1
+        
+            MasterReport_DF.loc[idx_start:idx_end, 'Stand Group_Pred'] = 'Stand Group - ' + str(ii)
+
+
+            OnBottomHours =  MasterReport_DF.loc[idx_start:idx_end, 'RotateDrilling'].sum() + MasterReport_DF.loc[idx_start:idx_end, 'Slide Drilling'].sum()
+            StandDuration =  MasterReport_DF.loc[idx_start:idx_end+1, 'Duration(minutes)'].sum()
+            StandMeterageDrilling = MasterReport_DF.loc[idx_start:idx_end, 'Meterage(m)(Drilling)'].sum()
+
+
+            MasterReport_DF.loc[idx, 'Stand On Bottom Hours'] = OnBottomHours
+            MasterReport_DF.loc[idx, 'Stand Stand Duration (hrs)'] = StandDuration
+            MasterReport_DF.loc[idx, "Stand Meterage (m) (Drilling)"] = StandMeterageDrilling
+
+            # print(str(idx_start) + " - " + str(idx_end))
+            idx_start = idx + 1
+
+        ii = ii + 1
+    return MasterReport_DF
