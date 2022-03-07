@@ -529,7 +529,7 @@ elif NavBar =="Activity Summary Table":
     #     st.text(error_msg)
 elif NavBar == 'Summary Dashboard':
 
-    SummaryActivity_DF = InputActivity_DB = pd.read_csv('RealTime_Test/Temp_SummaryActivity.csv', index_col = False)
+    SummaryActivity_DF = pd.read_csv('RealTime_Test/Temp_SummaryActivity.csv', index_col = False)
     # st.dataframe(SummaryActivity_DF)
     PieChart_DF = SummaryActivity_DF.groupby(['LABEL_SubActivity', 'LABEL_Activity']).sum().reset_index()
     PieChart_DF = PieChart_DF[['LABEL_SubActivity', 'LABEL_Activity', 'Duration(minutes)']]
@@ -545,10 +545,11 @@ elif NavBar == 'Summary Dashboard':
         ).reset_index()
     ConnectionTime_DF = ConnectionTime_DF[ConnectionTime_DF['RotateDrilling'] != 0]
 
-    OBH_ROP_DF = pd.read_csv("C:\\Users\\irsya\\Downloads\\KS ORKA_SMP AAE-08_ActivitySummary.csv")
+    # OBH_ROP_DF = pd.read_csv("C:\\Users\\irsya\\Downloads\\KS ORKA_SMP AAE-08_ActivitySummary.csv")
 
+    OBH_ROP_DF = SummaryActivity_DF.copy()
 
-    OBH_ROP_DF['Stand Group_Pred_Shift'] = OBH_ROP_DF['Stand Group_Pred'].shift(1)
+    OBH_ROP_DF['Stand Group_Pred_Shift'] = SummaryActivity_DF['Stand Group_Pred'].shift(1)
     OBH_ROP_DF = OBH_ROP_DF[OBH_ROP_DF['LABEL_SubActivity']=='Connection']
     OBH_ROP_DF = OBH_ROP_DF.dropna(subset=['Stand Group_Pred_Shift'])
     OBH_ROP_DF = OBH_ROP_DF[OBH_ROP_DF['Stand Meterage (m) (Drilling)']!=0]
