@@ -14,6 +14,7 @@ import requests
 import json
 from datetime import datetime, timedelta
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
+import plotly.express as px
 
 
 
@@ -399,6 +400,32 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
 
             gb_2 = GridOptionsBuilder.from_dataframe(SummaryActivity_DF)
             # gb_2.configure_selection('multiple', use_checkbox=True)
+            gb_2.configure_column("LABEL_Activity", editable=True, cellEditor='agSelectCellEditor', cellEditorPopup=True, cellEditorParams={
+
+                'values': ['CEMENTING JOB',
+                                'CIRCULATE HOLE CLEANING',
+                                'CONNECTION',
+                                'DRILL OUT CEMENT',
+                                'DRILLING FORMATION',
+                                'LAY DOWN BHA',
+                                'MAKE UP BHA',
+                                'NPT',
+                                'N/D BOP',
+                                'N/U BOP',
+                                'OTHER',
+                                'RUNNING CASING IN',
+                                'STATIONARY',
+                                'STUCK PIPE',
+                                'TRIP IN',
+                                'TRIP OUT',
+                                'WAIT ON CEMENT',
+                                'CIRCULATION',
+                                'RIG REPAIR',
+                                'WIPER TRIP'
+                                ],
+                                }
+                            )
+
             gridOptions = gb_2.build()
 
 
@@ -409,6 +436,9 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
                     # update_mode=(GridUpdateMode.SELECTION_CHANGED),
                     
             )
+            SummaryActivity_DF = SummaryActivityGrid_response['data']
+
+            SummaryActivity_DF.to_csv('RealTime_Test/Temp_SummaryActivity.csv', index = False)
             
 
             # st.table(Activity_DF.head(20))
@@ -433,6 +463,7 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
             file_name=CompName_Select + "_"+ WellName_Select + '_InputActivityDB.csv',
             mime='text/csv',
         )
+
         # except Exception as error_msg:
         #     st.text(error_msg)
 
@@ -453,30 +484,106 @@ if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_st
         #     )
         # st.plotly_chart(figchart,use_container_width=True)
 elif NavBar =="Activity Summary Table":
-    try:
+    # try:
 
-        InputActivity_DB = GenerateInputActivity_DB(flag=True)
-        ActivitySum_Table = st.dataframe(InputActivity_DB)
+    InputActivity_DB = GenerateInputActivity_DB(flag=True)
+    ActivitySum_Table = st.dataframe(InputActivity_DB)
+
+    # Cell_dict_test = {
+    #     'field':'Activity',
+
+    #     'editable': True,
+    #     # cellRenderer: GenderRenderer,
+    #     'cellEditor': 'agRichSelectCellEditor',
+    #     'cellEditorPopup': True,
+    #     cellEditorParams: {
+    #     #   cellRenderer: GenderRenderer,
+    #     values: ['Male', 'Female'],
+    #     },
+    # }
+    gb = GridOptionsBuilder.from_dataframe(InputActivity_DB)
+    gb.configure_selection('multiple', use_checkbox=True)
+    gb.configure_column("Activity", editable=True, cellEditor='agSelectCellEditor', cellEditorPopup=True, cellEditorParams={
+        #   cellRenderer: GenderRenderer,
+        'values': ["DRILLING FORMATION", 
+                                'CIRCULATE HOLE CLEANING',
+                                'CONNECTION',
+                                'DRILL OUT CEMENT'],
+        })
+    gridOptions = gb.build()
+    grid_response = AgGrid(
+        InputActivity_DB, 
+        gridOptions=gridOptions,
+        data_return_mode=DataReturnMode.AS_INPUT, 
+        update_mode=(GridUpdateMode.SELECTION_CHANGED),
+    )
+
+    if st.button('print result'):
+        list_selected =[]
+        for dt_temp in grid_response['selected_rows']:
+            list_selected.append(dt_temp['dt'])
+        st.dataframe(InputActivity_DB[~InputActivity_DB['dt'].isin(list_selected)])
 
 
-        gb = GridOptionsBuilder.from_dataframe(InputActivity_DB)
-        gb.configure_selection('multiple', use_checkbox=True)
-        gridOptions = gb.build()
-        grid_response = AgGrid(
-            InputActivity_DB, 
-            gridOptions=gridOptions,
-            data_return_mode=DataReturnMode.AS_INPUT, 
-            update_mode=(GridUpdateMode.SELECTION_CHANGED),
-        )
+    # except Exception as error_msg:
+    #     st.text(error_msg)
+elif NavBar == 'Summary Dashboard':
 
-        if st.button('print result'):
-            list_selected =[]
-            for dt_temp in grid_response['selected_rows']:
-                list_selected.append(dt_temp['dt'])
-            st.dataframe(InputActivity_DB[~InputActivity_DB['dt'].isin(list_selected)])
+    SummaryActivity_DF = InputActivity_DB = pd.read_csv('RealTime_Test/Temp_SummaryActivity.csv', index_col = False)
+    # st.dataframe(SummaryActivity_DF)
+    PieChart_DF = SummaryActivity_DF.groupby(['LABEL_SubActivity', 'LABEL_Activity']).sum().reset_index()
+    PieChart_DF = PieChart_DF[['LABEL_SubActivity', 'LABEL_Activity', 'Duration(minutes)']]
+    
+    
+    ConnectionTime_DF = SummaryActivity_DF.groupby(['Stand Group_Pred']).agg({
+            'date_time':'first', 
+            'RotateDrilling':'sum', 
+            'Slide Drilling':'sum',
+            'ReamingTime':'sum',
+            'ConnectionTime':'sum',
+            }
+        ).reset_index()
+    ConnectionTime_DF = ConnectionTime_DF[ConnectionTime_DF['RotateDrilling'] != 0]
+
+    OBH_ROP_DF = pd.read_csv("C:\\Users\\irsya\\Downloads\\KS ORKA_SMP AAE-08_ActivitySummary.csv")
 
 
-    except Exception as error_msg:
-        st.text(error_msg)
+    OBH_ROP_DF['Stand Group_Pred_Shift'] = OBH_ROP_DF['Stand Group_Pred'].shift(1)
+    OBH_ROP_DF = OBH_ROP_DF[OBH_ROP_DF['LABEL_SubActivity']=='Connection']
+    OBH_ROP_DF = OBH_ROP_DF.dropna(subset=['Stand Group_Pred_Shift'])
+    OBH_ROP_DF = OBH_ROP_DF[OBH_ROP_DF['Stand Meterage (m) (Drilling)']!=0]
+    OBH_ROP_DF['ROP'] = OBH_ROP_DF['Stand Meterage (m) (Drilling)'] / (OBH_ROP_DF['Stand On Bottom Hours']/60)
+    OBH_ROP_DF['OBH'] = (OBH_ROP_DF['Stand On Bottom Hours']/60)
+
+
+
+
+
+    st.markdown('<h1 style="text-align: center; font-size: 50px; margin-top: 2px;"><span style="text-decoration: underline;">Summary Report</span></h1>', unsafe_allow_html=True)
+
+    with st.expander('Activity-SubActivity Summary'):
+        
+        figSunBurst = px.sunburst(PieChart_DF, path=['LABEL_SubActivity', 'LABEL_Activity'], values='Duration(minutes)')
+        st.plotly_chart(figSunBurst)
+        # st.markdown("<h1 style='text-align: center; font-size: 50px;margin-top: 300px;'>  Welcome !</h1>", unsafe_allow_html=True)
+
+    with st.expander('Connection Time'):
+        figConnectionTime = px.bar(ConnectionTime_DF, x='date_time', y=['RotateDrilling', 'Slide Drilling','ReamingTime','ConnectionTime'], width=1000, height=1000)
+        st.plotly_chart(figConnectionTime)
+        
+        
+
+    with st.expander("ROP On Bottom and Stand"):
+    
+        figOBH_ROP = px.bar(OBH_ROP_DF, x="date_time", y=['ROP','OBH'] ,
+                    barmode='group',
+                    height=400)
+
+        st.plotly_chart(figOBH_ROP)
+        
+
+    with st.expander("Stand Time Breakdown"):
+        # st.markdown("<h1 style='text-align: center; font-size: 5px;margin-top: 300px;'>  Welcome !</h1>", unsafe_allow_html=True)  
+        st.plotly_chart(figConnectionTime)
 else:
     st.markdown("<h1 style='text-align: center; font-size: 130px;margin-top: 300px;'>  Welcome !</h1>", unsafe_allow_html=True)
