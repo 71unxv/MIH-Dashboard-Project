@@ -564,7 +564,7 @@ elif NavBar == 'Summary Dashboard':
 
     with st.expander('Activity-SubActivity Summary'):
         
-        figSunBurst = px.sunburst(PieChart_DF, path=['LABEL_SubActivity', 'LABEL_Activity'], values='Duration(minutes)')
+        figSunBurst = px.sunburst(PieChart_DF, path=['LABEL_Activity', 'LABEL_SubActivity'], values='Duration(minutes)')
         st.plotly_chart(figSunBurst)
         # st.markdown("<h1 style='text-align: center; font-size: 50px;margin-top: 300px;'>  Welcome !</h1>", unsafe_allow_html=True)
 

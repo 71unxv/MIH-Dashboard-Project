@@ -363,6 +363,9 @@ def GetActivity_DF(Activity_DF, InputActivity_DB):
             # print(InputActivity_DB.iloc[ii, 0])
             # print('test')
             # end_time_temp = InputActivity_DB.loc[ii+1, 'dt']
+            print((Activity_DF['dt'].dtypes))
+            print(type(start_time_temp))
+            print(start_time_temp)
             idx_logic = (Activity_DF['dt'] >= start_time_temp)
             
 
@@ -1274,3 +1277,61 @@ def labelStand(MasterReport_DF):
 
         ii = ii + 1
     return MasterReport_DF
+
+
+def SummaryTranslator(summaryDB, WellName, CompName, PIC_Info, Remarks_Info, Section_Info):
+    summaryDB['comp'] = WellName
+    summaryDB['well'] = CompName
+    summaryDB['pic'] = PIC_Info
+    summaryDB['section'] = Remarks_Info
+    summaryDB['remarks'] = Section_Info
+    summaryDB['time_start'] = pd.to_datetime(summaryDB.date + " " + summaryDB.Time_start)
+    summaryDB['time_end'] = pd.to_datetime(summaryDB.date + " " + summaryDB.Time_end)
+    # summaryDB['time_start'] = pd.to_datetime(summaryDB.date.dt.strftime('%Y-%m-%d') + " " + summaryDB.Time_start)
+    # summaryDB['time_end'] = pd.to_datetime(summaryDB.date.dt.strftime('%Y-%m-%d') + " " + summaryDB.Time_end)
+    summaryDB['date'] = pd.to_datetime(summaryDB['date']).dt.date
+    listcolumn = ['comp',
+    'well',
+    'time_start',
+    'time_end',
+    'duration_minutes',
+    'hole_depth',
+    'bit_depth',
+    'meterage_drilling',
+    'rotate_drilling_time',
+    'slide_drilling_time',
+    'reaming_time',
+    'connection_time',
+    'on_bottom_hours',
+    'stand_duration',
+    'label_subactivity',
+    'label_activity',
+    'stand_meterage_drilling',
+    'stand_durationx',
+    'stand_on_bottom',
+    'stand_group',
+    'pic',
+    'section',
+    'remarks']
+    ColumnName_Dict = {
+    'duration_minutes':'Duration(minutes)',
+    'hole_depth':'Hole Depth(max)',
+    'bit_depth':'Bit Depth(mean)',
+    'meterage_drilling':'Meterage(m)(Drilling)',
+    'rotate_drilling_time':'RotateDrilling',
+    'slide_drilling_time':'Slide Drilling',
+    'reaming_time':'ReamingTime',
+    'connection_time':'ConnectionTime',
+    'on_bottom_hours':'On Bottom Hours',
+    'stand_duration':'Stand Duration',
+    'label_subactivity':'LABEL_SubActivity',
+    'label_activity':'LABEL_Activity',
+    'stand_meterage_drilling':'Stand Meterage (m) (Drilling)',
+    'stand_durationx':'Stand Stand Duration (hrs)',
+    'stand_on_bottom':'Stand On Bottom Hours',
+    'stand_group':'Stand Group_Pred'
+    }
+    ColumnName_Dict_fin = dict((y,x) for x,y in ColumnName_Dict.items())
+
+    summaryDB.rename(columns = ColumnName_Dict_fin, inplace = True)
+    return summaryDB[listcolumn]

@@ -15,11 +15,20 @@ import json
 from datetime import datetime, timedelta
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
 import plotly.express as px
-import psycopg2
 
-################################################################################################################
-########################################## Useful Function #####################################################
-################################################################################################################
+
+
+st.set_page_config(page_title="Realtime Activity Mapping", page_icon=None, layout="wide",)
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            </style>
+            """
+# st.markdown(hide_st_style, unsafe_allow_html=True)
+
+st.sidebar.image('PDU_Logo.jpg',use_column_width ='never', width=300)
 
 def GenerateInputActivity_DB(flag=False):
     if flag:
@@ -43,172 +52,6 @@ def GenerateInputActivity_DB(flag=False):
             )
 
     return InputActivity_DB
-
-def oldIOdata():
-    # @st.cache
-    # def GetInputActivity_DB(Conn, Well, Comp):
-    #     cursor = Conn.cursor()
-
-    #     select_query = "select * from activitylog_db"
-    #     select_query += " where (well = '%s' and comp = '%s')" % (Well, Comp)
-    #     # select_query += "where  = %s" %Well
-    #     Table_Column = ['input_id',
-    #                         'dt',
-    #                         'date',
-    #                         'time',
-    #                         'comp',
-    #                         'well',
-    #                         'activity',
-    #                         'in_slip_treshold',
-    #                         'remarks',
-    #                         'pic',
-    #                         'section'
-    #                         ]
-    #     try:
-    #         cursor.execute(select_query)
-    #     except (Exception, psycopg2.DatabaseError) as error:
-    #         print("Error: %s" % error)
-    #         cursor.close()
-    #         return 1
-        
-    #     # Naturally we get a list of tupples
-    #     tupples = cursor.fetchall()
-    #     cursor.close()
-    #     Conn.close()
-    #     # We just need to turn it into a pandas dataframe
-    #     df = pd.DataFrame(tupples, columns=Table_Column)
-    #     return df
-    # def GetSummaryActivity_DB(Conn, Well, Comp):
-    #     cursor = Conn.cursor()
-
-    #     select_query = "select * from summary_activity_db"
-    #     select_query += " where (well = '%s' and comp = '%s')" % (Well, Comp)
-    #     # select_query += "where  = %s" %Well
-    #     listcolumn = ['comp',
-    #         'well',
-    #         'time_start',
-    #         'time_end',
-    #         'duration_minutes',
-    #         'hole_depth',
-    #         'bit_depth',
-    #         'meterage_drilling',
-    #         'rotate_drilling_time',
-    #         'slide_drilling_time',
-    #         'reaming_time',
-    #         'connection_time',
-    #         'on_bottom_hours',
-    #         'stand_duration',
-    #         'label_subactivity',
-    #         'label_activity',
-    #         'stand_meterage_drilling',
-    #         'stand_durationx',
-    #         'stand_on_bottom',
-    #         'stand_group',
-    #         'pic',
-    #         'section',
-    #         'remarks']
-    #     try:
-    #         cursor.execute(select_query)
-    #     except (Exception, psycopg2.DatabaseError) as error:
-    #         print("Error: %s" % error)
-    #         cursor.close()
-    #         return 1
-        
-    #     # Naturally we get a list of tupples
-    #     tupples = cursor.fetchall()
-    #     cursor.close()
-    #     Conn.close()
-    #     # We just need to turn it into a pandas dataframe
-    #     df = pd.DataFrame(tupples, columns=Table_Column)
-    #     return df
-
-    # # @st.cache
-    # def OpenConnection():
-    #     param_dic = {
-    #     "host"      : "localhost",
-    #     "database"  : "PDU_AUTOMAPPING",
-    #     "user"      : "postgres",
-    #     "password"  : "Saber2496"
-    #     }
-    #     conn = None
-    #     # import json
-
-
-        
-    #     # print(user_encode_data)
-    #     # try:
-    #         # connect to the PostgreSQL server
-    #         # print('Connecting to the PostgreSQL database...')
-    #     conn = psycopg2.connect(**param_dic)
-    #     # except (Exception, psycopg2.DatabaseError) as error:
-    #         # print(error)
-    #         # sys.exit(1) 
-    #     return conn
-
-    # def DeleteInputActivity_DB(Conn, Well, Comp, InputID):
-    #     SQL_Queries = "delete from activitylog_db"
-    #     SQL_Queries += " where ((well = '%s' and comp = '%s') and input_id = %s)" % (Well, Comp, InputID)
-
-        
-    #     cursor = Conn.cursor()
-    #     try:
-    #         cursor.execute(SQL_Queries)
-    #         Conn.commit()
-    #     except(Exception, psycopg2.DatabaseError) as error:
-    #         print("Error: %s" % error)
-    #         Conn.rollback()
-    #         cursor.close()
-    #         return 1
-    #     cursor.close()
-    #     Conn.close() 
-
-    #     # return None
-
-    # def InsertInputActivity_DB(Conn, InputDict):
-        
-    #     SQL_Queries = """
-    #     INSERT into activitylog_db(input_id, dt, date, time, comp, well, activity, in_slip_treshold, remarks, pic, section) values(%s,'%s','%s','%s','%s','%s','%s',%s,'%s','%s','%s');
-    #     """ % tuple(InputDict.values())
-        
-    #     cursor = Conn.cursor()
-    #     try:
-    #         cursor.execute(SQL_Queries)
-    #         Conn.commit()
-    #     except(Exception, psycopg2.DatabaseError) as error:
-    #         print("Error: %s" % error)
-    #         Conn.rollback()
-    #         cursor.close()
-    #         return 1
-    #     cursor.close()
-    #     Conn.close() 
-    #     # return None
-
-    # def InsertSummaryActivity_DB(Conn, SummaryActivity_DF, WellName, CompName):
-    #     SummaryActivity_DF = Activity.SummaryTranslator(SummaryActivity_DF, WellName, CompName, '-', '-', '-')
-    #     for i in SummaryActivity_DF.index:
-    #         SQL_Queries = """INSERT into summary_activity_db(comp, well, time_start, time_end, duration_minutes, hole_depth, bit_depth, meterage_drilling, rotate_drilling_time, slide_drilling_time, reaming_time, connection_time, on_bottom_hours, stand_duration, label_subactivity, label_activity, stand_meterage_drilling, stand_durationx, stand_on_bottom, stand_group, pic, section, remarks) values('%s', '%s', '%s', '%s', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, '%s', '%s', '%s', %s, %s, '%s', '%s', '%s', '%s'"""
-    #         SQL_Queries += ")" 
-
-    #         # print()
-    #         cursor = Conn.cursor()
-    #         try:
-    #             cursor.execute(SQL_Queries % tuple(SummaryActivity_DF.iloc[i,:].to_list()))
-    #             Conn.commit()
-    #         except(Exception, psycopg2.DatabaseError) as error:
-    #             print("Error: %s" % error)
-    #             Conn.rollback()
-    #             cursor.close()
-    #             return 1
-    #         cursor.close()
-    #     Conn.close() 
-    return None
-
-def InputTranslator(Input_DB):
-    Input_DB['dt'] = (Input_DB['dt']).apply(lambda d: pd.to_datetime(str(d)))
-
-    Input_DB.rename(columns = {'in_slip_treshold':'Hook Treshold', 'activity':'Activity'}, inplace = True)
-    return Input_DB
-    
 
 
 @st.cache
@@ -235,34 +78,16 @@ def cache_RealTime_Data(well_id, StartDateTime_select, EndDateTime_select):
 def UpdateWellData():
     st.session_state.SelectDateLogic = True
     # return
-
-
-
-################################################################################################################
-######################################## App start from Here ###################################################
-################################################################################################################
-
-
-st.set_page_config(page_title="Realtime Activity Mapping", page_icon=None, layout="wide",)
-hide_st_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
-            </style>
-            """
-# st.markdown(hide_st_style, unsafe_allow_html=True)
-
-st.sidebar.image('PDU_Logo.jpg',use_column_width ='never', width=300)
-
 PageList = [
-    "Activity Mapping Module",
+    "Activity Mapping",
     "Activity Summary Table",
     "Summary Dashboard",
 ]
 NavBar = st.sidebar.selectbox("Select Module:",PageList)
 
-
+# InputActivity_DB = GenerateInputActivity_DB()
+InputActivity_DB = pd.read_csv('RealTime_Test/Temp_InputActivity.csv', index_col = False)
+# print(InputActivity_DB)
 CompName_JSON = requests.get(
         "https://pdumitradome.id/dome_api/rtdc/get_company/"
     ).json()
@@ -289,12 +114,12 @@ else:
     WellList = WellName_DF['well_name'].to_list()
 
 
-
+# temp_wellname = st.session_state.WellNameSelect
 WellName_Select = st.sidebar.selectbox("Select Well",WellList, key='WellNameSelect')
 
 CompWell_Name = CompName_Select + '-' + WellName_Select
-
-
+# print(CompWell_Name)
+# twoday_dt_temp = 
 try:
     Datetime_start = (WellName_DF.loc[WellName_DF['well_name']==WellName_Select, 'active_date']).to_list()[0]
     Datetime_end = (WellName_DF.loc[WellName_DF['well_name']==WellName_Select, 'end_date']).to_list()[0]
@@ -310,13 +135,15 @@ except Exception as error_msg:
     print(error_msg)
     # None
 
-
+# PageList = [
+#     "Activity Mapping",
+#     "Summary Dashboard",
+# ]
+# NavBar = st.sidebar.selectbox("Select Module:",PageList)
 if 'SelectDateLogic' not in st.session_state:
 	st.session_state.SelectDateLogic = False
 if 'FileUploadLogic' not in st.session_state:
 	st.session_state.FileUploadLogic = False
-if 'FileUploadLogic_SummaryReport' not in st.session_state:
-	st.session_state.FileUploadLogic_SummaryReport = False
 
 if 'UpdateRTData' not in st.session_state:
 	st.session_state.UpdateRTData = False
@@ -325,7 +152,8 @@ if 'StartDateTime_select' not in st.session_state:
 	st.session_state.StartDateTime_select = False
 if 'EndDateTime_select' not in st.session_state:
 	st.session_state.EndDateTime_select = True
-
+if 'FileUploadLogic_SummaryReport' not in st.session_state:
+	st.session_state.FileUploadLogic_SummaryReport = False
 
 
 with st.sidebar.form(key='DateInput'):
@@ -349,7 +177,7 @@ with st.sidebar.form(key='DateInput'):
         st.session_state.UpdateRTData = True
 
 print(st.session_state.SelectDateLogic)
-if NavBar == "Activity Mapping Module" and (CompName_Select != '-') and ((st.session_state.SelectDateLogic == True)):
+if NavBar == "Activity Mapping" and (CompName_Select != '-') and ((st.session_state.SelectDateLogic == True)):
     # st.title("Activity Mapping Module")
     st.markdown('<h1 style="text-align: center; font-size: 50px; margin-top: 2px;"><span style="text-decoration: underline;">ACTIVITY MAPPING MODULE</span></h1>', unsafe_allow_html=True)
     try:
@@ -363,16 +191,11 @@ if NavBar == "Activity Mapping Module" and (CompName_Select != '-') and ((st.ses
         error_stop = False
     if error_stop:
         Activity_DF = st.session_state.Activity_DF
-        # InputActivity_DB = GenerateInputActivity_DB(flag=True)
-        
-        InputActivity_DB = IO_Data.GetInputActivity_DB(IO_Data.OpenConnection(), WellName_Select, CompName_Select)
+        InputActivity_DB = GenerateInputActivity_DB(flag=True)
         # InputActivity_DB = pd.read_csv('RealTime_Test/Temp_InputActivity.csv', index_col = False)
 
-            
-        # Table_col = st.columns(1)
         with st.form(key='Activity Input:'):
-            st.markdown('### Major Activity Input')
-            cols = st.columns(7)
+            cols = st.columns(6)
             Date_Temp = cols[0].date_input(
                         "Date", value= Datetime_end, key='InputDate'
                         )
@@ -409,9 +232,9 @@ if NavBar == "Activity Mapping Module" and (CompName_Select != '-') and ((st.ses
                         )
             
             HookTreshold_Temp = cols[3].number_input(
-                        "In-Slip Treshold",
+                        "HookTreshold",
                         
-                        key="InSlipTreshold"
+                        key="HookTreshold"
                         )
             Remarks_Temp = cols[4].text_input(label='Additional Remarks',
                         key="Remarks"
@@ -419,145 +242,129 @@ if NavBar == "Activity Mapping Module" and (CompName_Select != '-') and ((st.ses
             PIC_Temp = cols[5].text_input(label='PIC',
                         key="PIC"
                         )
-            Section_Temp = cols[6].selectbox('Section',
-                        [
-                            '26"',
-                            '17-1/2"',
-                            '12-1/4"',
-                            '9-3/4"'
-                        ],
-                        key="Section"
-                        )
 
             
-
+            # submitted = st.form_submit_button('Submit')
+            # print(submitted)
             
             if st.form_submit_button('Submit'):
 
-                InputID_temp = InputActivity_DB['input_id'].max() + 1
-                InputDict = {
-                    'input_id':InputID_temp,
-                        'dt':(datetime.combine(Date_Temp, Time_Temp)),
-                        'date':str(Date_Temp),
-                        'time':str(Time_Temp),
-                        'comp':CompName_Select,
-                        'well':WellName_Select,
-                        'activity':Activity_Temp,
-                        'in_slip_treshold':HookTreshold_Temp,
-                        'remarks':Remarks_Temp,
-                        'pic':PIC_Temp,
-                        'section':Section_Temp
-                }
+                # print(InputActivity_DB)
+                InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
+                # columns=[
+                # 'dt',
+                # 'Date',
+                # 'Time',
+                # 'Comp-Well',
+                # "Activity",
+                # "Hook Treshold",
+                # "Remarks",
+                # "PIC"
+                # ]
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'dt'] = (datetime.combine(Date_Temp, Time_Temp))
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'Date'] = str(Date_Temp)
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'Time'] = str(Time_Temp)
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'Comp-Well'] = CompWell_Name
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'Activity'] = Activity_Temp
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'Hook Treshold'] = HookTreshold_Temp
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'Remarks'] = Remarks_Temp
+                # InputActivity_DB.loc[len(InputActivity_DB.index), 'PIC'] = PIC_Temp
 
-                IO_Data.InsertInputActivity_DB(IO_Data.OpenConnection(), InputDict)
-                
+                InputActivity_DB.loc[len(InputActivity_DB.index)] = [
+                    (datetime.combine(Date_Temp, Time_Temp)),
+                    str(Date_Temp),
+                    str(Time_Temp),
+                    CompWell_Name,
+                    Activity_Temp,
+                    HookTreshold_Temp,
+                    Remarks_Temp,
+                    PIC_Temp
+                ]
 
-
-
+                InputActivity_DB = InputActivity_DB.sort_values(by='dt', ascending=True)    
+                InputActivity_DB.sort_values(by='dt', ascending=True).to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
 
 
             
-        Table_col = st.columns(1)
-        Table_col[0].markdown('### Activity Log')
-        Table_col[0].text('To Do')
-        Table_col[0].text('- solve Aggrid reloading')
+            Table_col = st.columns(1)
+            Table_col[0].markdown('### Activity Log')
+            Table_col[0].text('To Do')
+            Table_col[0].text('- solve Aggrid reloading')
 
         # General = st.columns(1)
             
         # print('tes')
-        # gb = GridOptionsBuilder.from_dataframe(InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
-        # with st.form(key='Activity Edit:'):
-        used_columns = {"date":"Date", "time":"Time", "well":"Well", "comp":"Company", "section":"Section", "activity":"Major Activity", "in_slip_treshold":"In-Slip Threshold", "remarks":"Additional Remarks", "pic":"PIC"
-        }
-
-        InputActivity_DB = IO_Data.GetInputActivity_DB(IO_Data.OpenConnection(), WellName_Select, CompName_Select)
-
-        InputActivity_DB_temp = InputActivity_DB.copy()
-        InputActivity_DB_temp.rename(columns=used_columns, inplace=True)
-
-        gb = GridOptionsBuilder.from_dataframe(InputActivity_DB_temp[list(used_columns.values())])
-        # gb = GridOptionsBuilder.from_dataframe((InputActivity_DB[used_columns.keys()]).rename(columns=used_columns, inplace=True))
+        gb = GridOptionsBuilder.from_dataframe(InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
         gb.configure_selection('multiple', use_checkbox=True)
         gridOptions = gb.build()
 
 
         InputActivityGrid_response = AgGrid(
-                InputActivity_DB_temp, 
+                InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name], 
                 gridOptions=gridOptions,
                 data_return_mode=DataReturnMode.AS_INPUT, 
                 update_mode=(GridUpdateMode.SELECTION_CHANGED),
+                
         )
-
 
         Button_col_1 = st.columns(3)
         if Button_col_1[0].button('Clear Selected Row', key='refresh'):
             list_selected =[]
             for dt_temp in InputActivityGrid_response['selected_rows']:
-                # IO_Data.DeleteInputActivity_DB(IO_Data.OpenConnection(), dt_temp['input_id'].values)
-                print(dt_temp)
-                # idx_delete = 
-                # idx_delete = (InputActivity_DB['date'] == dt_temp ['Date']) & (InputActivity_DB['time'] == dt_temp ['Time'])
-                # print("inilah yanganda cari")
-                # print(idx_delete)
-                IO_Data.DeleteInputActivity_DB(IO_Data.OpenConnection(), WellName_Select, CompName_Select, dt_temp['input_id'])
-                # list_selected.append(dt_temp['input_id'])
+                list_selected.append(dt_temp['dt'])
                 # print(list_selected)
 
-            InputActivity_DB = IO_Data.GetInputActivity_DB(IO_Data.OpenConnection(), WellName_Select, CompName_Select)
 
-        # Button_col_1 = st.columns(3)
+            InputActivity_DB = InputActivity_DB.drop(InputActivity_DB.index[(InputActivity_DB['dt'].isin(list_selected)) & (InputActivity_DB['Comp-Well']==CompWell_Name)])
+            InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
+            InputActivity_DB.sort_values(by='dt', ascending=True).to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
+            InputActivity_DB = GenerateInputActivity_DB(flag=True)
+
 
             
 
-        # if Button_col_1[1].button('LOAD AAE-08', key='AAE08'):
+        if Button_col_1[1].button('LOAD AAE-08', key='AAE08'):
 
+            
+            InputActivity_DB = pd.read_csv('RealTime_Test/AAE-08_TEST_EDIT.csv', index_col = False)
+            InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
+            InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
+        if Button_col_1[2].button('clear All', key='AAE08'):
 
-        #     InputActivity_DB = pd.read_csv('RealTime_Test/AAE-08_TEST_EDIT.csv', index_col = False)
-        #     InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
-        #     InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
-        # if Button_col_1[2].button('clear All', key='AAE08'):
+            InputActivity_DB = InputActivity_DB[1:1]
 
-        #     InputActivity_DB = InputActivity_DB[1:1]
+            InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
 
-        #     InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
-
-        with st.expander("Download your Activity Log Table"):
-            st.download_button(
-                label="Download Activity Log Table as CSV",
-                data=convert_df(InputActivity_DB),
-                file_name=CompName_Select + "_"+ WellName_Select + '_ActivityLogTable.csv',
-                mime='text/csv',
-            )
-        with st.expander("Upload Your Activity Log Table"):
-
-            UploadUser = st.file_uploader('Override the Activity Log Table', type={'csv', 'txt'} , disabled=st.session_state.FileUploadLogic)
-            st.markdown("""### Upload Guidelines:""")
-            st.text("lorem ipsum")
+        with st.expander("Upload Your Data"):
+            UploadUser = st.file_uploader('ManualUpload', type={'csv', 'txt'} , disabled=st.session_state.FileUploadLogic)
             if UploadUser is not None:
                 InputActivity_DB = pd.read_csv(UploadUser, index_col = False)
                 InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
                 InputActivity_DB.to_csv('RealTime_Test/Temp_InputActivity.csv', index = False)
                 print('uploaded')
-
+            # else:
+            #     st.text('File Uploaded have incorrect format')
             if st.button('submit', key='UserSubmit'):
                 st.session_state.FileUploadLogic = True
 
 
+            # InputActivity_DB = pd.read_csv('RealTime_Test/AAE-08_TEST_EDIT.csv', index_col = False)
+            # spectra = st.file_uploader("upload file", type={"csv", "txt"})
 
-
+        # st.dataframe(InputActivity_DB)
+        # st.text(InputActivity_DB.columns)
+        # st.text(InputActivity_DB.dtypes)
+        # try:
         with st.spinner(text="Generate Activity Summary..."):
             Table_col_2 = st.columns(1)
-            # InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
+            InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
             # print("--")
             # print(Activity_DF.head(10))
             # print(InputActivity_DB.dtypes)
             # print(Activity_DF.dtypes)
             # st.dataframe(Activity_DF)
             # st.dataframe(InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
-            Input_Temp = InputTranslator(InputActivity_DB)
-            print(Input_Temp.dtypes)
-
-            Activity_DF = Activity.GetActivity_DF(Activity_DF, Input_Temp)
+            Activity_DF = Activity.GetActivity_DF(Activity_DF, InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
             # st.dataframe(Activity_DF)
             # st.dataframe(InputActivity_DB[InputActivity_DB['Comp-Well']==CompWell_Name])
             # print(Activity_DF.columns)
@@ -571,6 +378,17 @@ if NavBar == "Activity Mapping Module" and (CompName_Select != '-') and ((st.ses
             # print(Activity_DF.head(10))
             # print("-GetSubActivity")
             # print('Subactivity')
+            RadioButton = Table_col_2[0].radio("RAW Data?",
+                            ('Cleaned', 'Raw'), key='RadioButton'
+                            )
+
+            if RadioButton=='Raw':
+                SummaryActivity_DF = Activity.GenerateDuration_DF_v3(Activity_DF)
+            else:
+                SummaryActivity_DF = Activity.labelStand(Activity.cleanFalseSensor((Activity.GenerateDuration_DF_v3(Activity_DF))))
+                # Activity.GenerateDuration_DF_v3(Activity_DF)
+
+
 
             
             Table_col_2[0].markdown('### Activity Summary Table')
@@ -579,70 +397,33 @@ if NavBar == "Activity Mapping Module" and (CompName_Select != '-') and ((st.ses
             Table_col_2[0].text('        -add aditional module/function edit the activity summary table')
             Table_col_2[0].text('        -user can only edit/create activity log for specific well only, not general wells')
 
+            # Table_2 = Table_col_2[0].dataframe(SummaryActivity_DF)
 
-            RadioButton = Table_col_2[0].radio("Apply FALSE Sensor Filter?",
-                            ('Yes', 'No/RAW'), key='RadioButton'
-                            )
-
-            if RadioButton=='No/RAW':
-                SummaryActivity_DF = Activity.GenerateDuration_DF_v3(Activity_DF)
-            else:
-                SummaryActivity_DF = Activity.labelStand(Activity.cleanFalseSensor((Activity.GenerateDuration_DF_v3(Activity_DF))))
-
-                # Activity.GenerateDuration_DF_v3(Activity_DF)
-
-
-
-            Summary_Used_Columns = {
-                "date":"Date",
-                "Time_start":"Start Time",
-                "Time_end":"End Time",
-                "LABEL_Activity":"ACTIVITY",
-                "LABEL_SubActivity":"SUB-ACTIVITY",
-                "Duration(minutes)": "Duration (Minutes)",
-                "Hole Depth(max)":"Hole Depth (Max)",
-                "Bit Depth(mean)":"Bit Depth(mean)",
-                "Meterage(m)(Drilling)": "Drilling Meterage (m)",
-                "RotateDrilling":"Rotate Drilling (minutes)",
-                "Slide Drilling": "Slide Drilling (minutes)",
-                "ReamingTime": "Reaming (minutes)",
-                "ConnectionTime":"Connection (minutes)",
-                "On Bottom Hours":"On Bottom state (Hours)",
-                "Stand Group_Pred":"Stand Group",
-                "Stand Meterage (m) (Drilling)":"Total Stand Drilling Meterage (m)",
-                "Stand Stand Duration (hrs)":"Total Stand Duration (hrs)",
-                "Stand On Bottom Hours": "Total On Bottom Duration (hrs)",
-            }
-
-
-            SummaryActivity_DF_temp = SummaryActivity_DF.copy()
-            SummaryActivity_DF_temp.rename(columns=Summary_Used_Columns, inplace=True)
-
-            gb_2 = GridOptionsBuilder.from_dataframe(SummaryActivity_DF_temp[list(Summary_Used_Columns.values())])
+            gb_2 = GridOptionsBuilder.from_dataframe(SummaryActivity_DF)
             # gb_2.configure_selection('multiple', use_checkbox=True)
-            gb_2.configure_column("ACTIVITY", editable=True, cellEditor='agSelectCellEditor', cellEditorPopup=True, cellEditorParams={
+            gb_2.configure_column("LABEL_Activity", editable=True, cellEditor='agSelectCellEditor', cellEditorPopup=True, cellEditorParams={
 
-                    'values': ['CEMENTING JOB',
-                                    'CIRCULATE HOLE CLEANING',
-                                    'CONNECTION',
-                                    'DRILL OUT CEMENT',
-                                    'DRILLING FORMATION',
-                                    'LAY DOWN BHA',
-                                    'MAKE UP BHA',
-                                    'NPT',
-                                    'N/D BOP',
-                                    'N/U BOP',
-                                    'OTHER',
-                                    'RUNNING CASING IN',
-                                    'STATIONARY',
-                                    'STUCK PIPE',
-                                    'TRIP IN',
-                                    'TRIP OUT',
-                                    'WAIT ON CEMENT',
-                                    'CIRCULATION',
-                                    'RIG REPAIR',
-                                    'WIPER TRIP'
-                                    ],
+                'values': ['CEMENTING JOB',
+                                'CIRCULATE HOLE CLEANING',
+                                'CONNECTION',
+                                'DRILL OUT CEMENT',
+                                'DRILLING FORMATION',
+                                'LAY DOWN BHA',
+                                'MAKE UP BHA',
+                                'NPT',
+                                'N/D BOP',
+                                'N/U BOP',
+                                'OTHER',
+                                'RUNNING CASING IN',
+                                'STATIONARY',
+                                'STUCK PIPE',
+                                'TRIP IN',
+                                'TRIP OUT',
+                                'WAIT ON CEMENT',
+                                'CIRCULATION',
+                                'RIG REPAIR',
+                                'WIPER TRIP'
+                                ],
                                 }
                             )
 
@@ -650,7 +431,7 @@ if NavBar == "Activity Mapping Module" and (CompName_Select != '-') and ((st.ses
 
 
             SummaryActivityGrid_response = AgGrid(
-                    SummaryActivity_DF_temp, 
+                    SummaryActivity_DF, 
                     gridOptions=gridOptions,
                     # data_return_mode=DataReturnMode.AS_INPUT, 
                     # update_mode=(GridUpdateMode.SELECTION_CHANGED),
@@ -658,9 +439,9 @@ if NavBar == "Activity Mapping Module" and (CompName_Select != '-') and ((st.ses
             )
             SummaryActivity_DF = SummaryActivityGrid_response['data']
 
-            # SummaryActivity_DF.to_csv('RealTime_Test/Temp_SummaryActivity.csv', index = False)
+            SummaryActivity_DF.to_csv('RealTime_Test/Temp_SummaryActivity.csv', index = False)
             
-            
+
             # st.table(Activity_DF.head(20))
 
             # csv = convert_df(my_large_df)
@@ -677,11 +458,32 @@ if NavBar == "Activity Mapping Module" and (CompName_Select != '-') and ((st.ses
             file_name=CompName_Select + "_"+ WellName_Select + '_RT_5second_Data.csv',
             mime='text/csv',
         )
+        st.download_button(
+            label="Download ActivityLog data as CSV",
+            data=convert_df(InputActivity_DB),
+            file_name=CompName_Select + "_"+ WellName_Select + '_InputActivityDB.csv',
+            mime='text/csv',
+        )
 
-        if st.button(label="Finalize"):
-            IO_Data.InsertSummaryActivity_DB(IO_Data.OpenConnection(), SummaryActivity_DF, WellName_Select, CompName_Select)
+        # except Exception as error_msg:
+        #     st.text(error_msg)
+
+        #     st.markdown("<h1 style='text-align: center; font-size: 50px;margin-top: 300px;'>  Select Date First </h1>", unsafe_allow_html=True)
+
+    # st.table(SummaryActivity_DF)
 
 
+        # figchart.add_trace(
+        #         go.Pie(
+        #         labels = PieChart_DF.index,
+        #         values = PieChart_DF.values/60,
+        #         hoverinfo = "label+percent",
+        #         textinfo = "value+label"
+        #         ),
+        #         row=1, col=1
+        
+        #     )
+        # st.plotly_chart(figchart,use_container_width=True)
 elif NavBar =="Activity Summary Table":
     # try:
 
@@ -710,8 +512,6 @@ elif NavBar =="Activity Summary Table":
                                 'DRILL OUT CEMENT'],
         })
     gridOptions = gb.build()
-    print("teeees")
-    print(gridOptions)
     grid_response = AgGrid(
         InputActivity_DB, 
         gridOptions=gridOptions,
@@ -729,6 +529,24 @@ elif NavBar =="Activity Summary Table":
     # except Exception as error_msg:
     #     st.text(error_msg)
 elif NavBar == 'Summary Dashboard':
+    # st.dataframe(MeterageDrillingDate_DF)
+
+    combine_text = CompName_Select + '-' + WellName_Select
+    st.markdown('<h1 style="text-align: center; font-size: 50px; margin-top: 2px;"><span style="text-decoration: underline;">Summary Report</span></h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="text-align: center; font-size: 40px; margin-top: 2px;">%s</h1>' % CompName_Select, unsafe_allow_html=True)
+    st.markdown('<h1 style="text-align: center; font-size: 30px; margin-top: 2px;">%s</h1>' % WellName_Select, unsafe_allow_html=True)
+    with st.expander("Upload Your Summary Activity Table"):
+
+        UploadUser = st.file_uploader('Override the Summary Activity Table', type={'csv', 'txt'} , disabled=st.session_state.FileUploadLogic_SummaryReport)
+        st.markdown("""### Upload Guidelines:""")
+        st.text("lorem ipsum")
+        if UploadUser is not None:
+            InputActivity_DB = pd.read_csv(UploadUser, index_col = False)
+            # InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
+            InputActivity_DB.to_csv('RealTime_Test/Temp_SummaryActivity_tes1.csv', index = False)
+            print('uploaded')
+        if st.button('submit', key='UserSubmit'):
+            st.session_state.FileUploadLogic_SummaryReport = True
     if not st.session_state.FileUploadLogic_SummaryReport:
         SummaryActivity_DF = pd.read_csv('RealTime_Test/Temp_SummaryActivity_tes1.csv', index_col = False)
     # st.dataframe(SummaryActivity_DF)
@@ -765,24 +583,6 @@ elif NavBar == 'Summary Dashboard':
             "date":"first"
         }
     )
-    st.dataframe(MeterageDrillingDate_DF)
-
-    combine_text = CompName_Select + '-' + WellName_Select
-    st.markdown('<h1 style="text-align: center; font-size: 50px; margin-top: 2px;"><span style="text-decoration: underline;">Summary Report</span></h1>', unsafe_allow_html=True)
-    st.markdown('<h1 style="text-align: center; font-size: 40px; margin-top: 2px;">%s</h1>' % CompName_Select, unsafe_allow_html=True)
-    st.markdown('<h1 style="text-align: center; font-size: 30px; margin-top: 2px;">%s</h1>' % WellName_Select, unsafe_allow_html=True)
-    with st.expander("Upload Your Summary Activity Table"):
-
-        UploadUser = st.file_uploader('Override the Summary Activity Table', type={'csv', 'txt'} , disabled=st.session_state.FileUploadLogic_SummaryReport)
-        st.markdown("""### Upload Guidelines:""")
-        st.text("lorem ipsum")
-        if UploadUser is not None:
-            InputActivity_DB = pd.read_csv(UploadUser, index_col = False)
-            InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
-            InputActivity_DB.to_csv('RealTime_Test/Temp_SummaryActivity_tes1.csv', index = False)
-            print('uploaded')
-        if st.button('submit', key='UserSubmit'):
-            st.session_state.FileUploadLogic_SummaryReport = True
 
     # with st.sidebar():
     if st.sidebar.checkbox("Display Surrounding Well"):
