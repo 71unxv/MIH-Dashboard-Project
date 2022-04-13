@@ -9,6 +9,7 @@ import IO_Data
 import time
 # import datetime
 import numpy as np
+import base64
 
 import requests
 import json
@@ -16,6 +17,8 @@ from datetime import datetime, timedelta
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
 import plotly.express as px
 import psycopg2
+import plotly.io as pio
+from fpdf import FPDF
 
 ################################################################################################################
 ########################################## Useful Function #####################################################
@@ -209,6 +212,9 @@ def InputTranslator(Input_DB):
     Input_DB.rename(columns = {'in_slip_treshold':'Hook Treshold', 'activity':'Activity'}, inplace = True)
     return Input_DB
     
+def create_download_link(val, filename):
+    b64 = base64.b64encode(val)  # val looks like b'...'
+    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Download file</a>'
 
 
 @st.cache
@@ -735,7 +741,8 @@ elif NavBar == 'Summary Dashboard':
     PieChart_DF = SummaryActivity_DF.groupby(['LABEL_SubActivity', 'LABEL_Activity']).sum().reset_index()
     PieChart_DF = PieChart_DF[['LABEL_SubActivity', 'LABEL_Activity', 'Duration(minutes)']]
     
-    
+    # StandTimeBreakdown_DF = SummaryActivity_DF.copy()
+    # StandTimeBreakdown_DF[]
     StandTimeBreakdown_DF = SummaryActivity_DF.groupby(['Stand Group_Pred']).agg({
             'date_time':'first', 
             'RotateDrilling':'sum', 
@@ -749,14 +756,14 @@ elif NavBar == 'Summary Dashboard':
     StandTimeBreakdown_DF = StandTimeBreakdown_DF.loc[~(StandTimeBreakdown_DF[['RotateDrilling', 'Slide Drilling', 'ReamingTime', 'ConnectionTime']]==0).all(axis=1)]
     # st.dataframe(StandTimeBreakdown_DF)
 
+    SummaryActivity_DF['Stand Group_Pred_Shift'] = SummaryActivity_DF['Stand Group_Pred'].shift(1)
     OBH_ROP_DF = SummaryActivity_DF.copy()
 
-    OBH_ROP_DF['Stand Group_Pred_Shift'] = SummaryActivity_DF['Stand Group_Pred'].shift(1)
     OBH_ROP_DF = OBH_ROP_DF[OBH_ROP_DF['LABEL_SubActivity']=='Connection']
     OBH_ROP_DF = OBH_ROP_DF.dropna(subset=['Stand Group_Pred_Shift'])
     OBH_ROP_DF = OBH_ROP_DF[OBH_ROP_DF['Stand Meterage (m) (Drilling)']!=0]
-    OBH_ROP_DF['ROP'] = OBH_ROP_DF['Stand Meterage (m) (Drilling)'] / (OBH_ROP_DF['Stand On Bottom Hours']/60)
-    OBH_ROP_DF['OBH'] = OBH_ROP_DF['Stand Meterage (m) (Drilling)'] / (OBH_ROP_DF['Stand Stand Duration (hrs)']/60)
+    OBH_ROP_DF['ROP'] = OBH_ROP_DF['Stand Meterage (m) (Drilling)'] / (OBH_ROP_DF['Stand Stand Duration (hrs)']/60)
+    OBH_ROP_DF['OBH'] = OBH_ROP_DF['Stand Meterage (m) (Drilling)'] / (OBH_ROP_DF['Stand On Bottom Hours']/60)
 
 
     MeterageDrillingDate_DF = SummaryActivity_DF.groupby(['date']).agg(
@@ -766,6 +773,7 @@ elif NavBar == 'Summary Dashboard':
         }
     )
     st.dataframe(MeterageDrillingDate_DF)
+    st.dataframe(SummaryActivity_DF)
 
     combine_text = CompName_Select + '-' + WellName_Select
     st.markdown('<h1 style="text-align: center; font-size: 50px; margin-top: 2px;"><span style="text-decoration: underline;">Summary Report</span></h1>', unsafe_allow_html=True)
@@ -778,7 +786,7 @@ elif NavBar == 'Summary Dashboard':
         st.text("lorem ipsum")
         if UploadUser is not None:
             InputActivity_DB = pd.read_csv(UploadUser, index_col = False)
-            InputActivity_DB['dt'] = InputActivity_DB['dt'].astype('datetime64')
+            InputActivity_DB['dt'] = InputActivity_DB['date'].astype('datetime64')
             InputActivity_DB.to_csv('RealTime_Test/Temp_SummaryActivity_tes1.csv', index = False)
             print('uploaded')
         if st.button('submit', key='UserSubmit'):
@@ -790,56 +798,155 @@ elif NavBar == 'Summary Dashboard':
     'Selected Surrounding Wells Statistics',
     [i for i in WellList if i != WellName_Select],
     [i for i in WellList if i != WellName_Select])
-
+    SummaryActivity_DF['date_time'] = SummaryActivity_DF['date_time'].astype('datetime64')
     with st.expander('Activity Summary'):
         
-        figPie_Activity = px.pie(PieChart_DF, values='Duration(minutes)', names='LABEL_Activity')
+        figPie_Activity = px.pie(PieChart_DF, 
+                         values='Duration(minutes)',
+                         names='LABEL_Activity',
+                        #   title="Activity Pie Chart",
+                          labels={"LABEL_Activity":"Activity", "Duration(minutes)":"Duration"}
+                          
+        )
+        figPie_Activity.update_traces( textinfo='percent+label')
         st.plotly_chart(figPie_Activity)
     with st.expander('SubActivity Summary'):
-        figPie_SubActivity = px.pie(PieChart_DF, values='Duration(minutes)', names='LABEL_SubActivity')
+        figPie_SubActivity = px.pie(PieChart_DF, 
+                         values='Duration(minutes)',
+                         names='LABEL_SubActivity',
+                        #   title="Sub Activity Pie Chart",
+                          labels={"LABEL_SubActivity":"Sub Activity", "Duration(minutes)":"Duration"}
+                          
+        )
+        figPie_SubActivity.update_traces( textinfo='percent+label')
+        # figPie_SubActivity = px.pie(PieChart_DF, values='Duration(minutes)', names='LABEL_SubActivity')
         st.plotly_chart(figPie_SubActivity)        
         # figSunBurst = px.sunburst(PieChart_DF, path=['LABEL_Activity', 'LABEL_SubActivity'], values='Duration(minutes)')
         # st.plotly_chart(figSunBurst)
         # st.markdown("<h1 style='text-align: center; font-size: 50px;margin-top: 300px;'>  Welcome !</h1>", unsafe_allow_html=True)
 
     with st.expander('Stand Time Breakdown'):
-        figStandTimeBreakdown = px.bar(StandTimeBreakdown_DF, x='date_time', y=['RotateDrilling', 'Slide Drilling','ReamingTime','ConnectionTime'], width=1000, height=1000)
+        # figStandTimeBreakdown = px.bar(StandTimeBreakdown_DF, x='date_time', y=['RotateDrilling', 'Slide Drilling','ReamingTime','ConnectionTime'], width=1000, height=1000)
+        figStandTimeBreakdown = px.bar(SummaryActivity_DF.dropna(subset=['Stand Group_Pred', "Duration(minutes)"]), x='Stand Group_Pred', y="Duration(minutes)", color="LABEL_SubActivity", width=1000, height=1000)
+        # figStandTimeBreakdown.update_xaxes(type='category')
+        figStandTimeBreakdown.update_layout(
+                        # title="Title",
+                        xaxis=dict(
+                            title="Stand Group"
+                        ),
+                        yaxis=dict(
+                            title="Duration(Minutes)"
+                        ) ) 
         st.plotly_chart(figStandTimeBreakdown)
         
     with st.expander("Time vs Depth"):
-        figTimeDepth = px.scatter(SummaryActivity_DF, x="date_time", y="Bit Depth(mean)", color='LABEL_SubActivity')
+        figTimeDepth = px.scatter( x=SummaryActivity_DF["date_time"], 
+                                   y=-SummaryActivity_DF["Hole Depth(max)"],
+                                   color=SummaryActivity_DF['LABEL_SubActivity'])
+        figTimeDepth.update_layout(
+                        # title="Title",
+                        xaxis=dict(
+                            title="Date - Time"
+                        ),
+                        yaxis=dict(
+                            title="Meterage Drilling(m)"
+                        ) ) 
         st.plotly_chart(figTimeDepth)
 
         
 
     with st.expander("Meterage Drilling per Date"):
+        layoutMeterageDrillingDate = go.Layout(
+                        # title="Title",
+                        xaxis=dict(
+                            title="Date"
+                        ),
+                        yaxis=dict(
+                            title="Meterage Drilling(m)"
+                        ) ) 
         figMeterageDrillingDate = go.Figure(go.Waterfall(
             name = "20", 
-            orientation = "v",
+            # orientation = "v",
             # measure = 'relative',
             x = MeterageDrillingDate_DF['date'],
             textposition = "outside",
             # text = ["+60", "+80", "", "-40", "-20", "Total"],
             y = -MeterageDrillingDate_DF['Meterage(m)(Drilling)'],
             connector = {"line":{"color":"rgb(63, 63, 63)"}},
-        ))
 
-        figMeterageDrillingDate.update_layout(
-                title = "Meterage Drilling By Date",
-                showlegend = True
         )
+            ,layout = layoutMeterageDrillingDate
+        )
+
+        # figMeterageDrillingDate.update_layout(
+        #         title = "Meterage Drilling By Date",
+        #         showlegend = True,
+        #         xaxis_label='depth'
+        # )
         st.plotly_chart(figMeterageDrillingDate)
 
     with st.expander("ROP On Bottom and Stand"):
     
-        figOBH_ROP = px.bar(OBH_ROP_DF, x="date_time", y=['ROP','OBH'] ,
-                    barmode='group',
-                    # height=600,
-                    width=1000
-                    )
 
+        figOBH_ROP = go.Figure(
+            px.bar(OBH_ROP_DF, 
+            x="date_time", 
+            y=['OBH','ROP'] ,
+            barmode='group',
+            # width=1000,
+
+            ),
+                    # layout = layoutOBH_ROP
+        )
+        figOBH_ROP.update_layout(
+                        # title="Title",
+                        xaxis=dict(
+                            title="Date - Time"
+                        ),
+                        yaxis=dict(
+                            title="On Bottom Hours(m/hr)"
+                        ) ) 
         st.plotly_chart(figOBH_ROP)
         
+    if st.button('download as report'):
+
+        figPie_Activity.write_image("RealTime_Test/Fig_temp/figPie_Activity.png")
+        figPie_SubActivity.write_image("RealTime_Test/Fig_temp/figPie_SubActivity.png")
+        figStandTimeBreakdown.write_image("RealTime_Test/Fig_temp/figStandTimeBreakdown.png")
+        figTimeDepth.write_image("RealTime_Test/Fig_temp/figTimeDepth.png")
+        figMeterageDrillingDate.write_image("RealTime_Test/Fig_temp/layoutMeterageDrillingDate.png")
+        figOBH_ROP.write_image("RealTime_Test/Fig_temp/layoutOBH_ROP.png")
+        pdf = FPDF()
+        pdf.add_page()
+        # pdf.cell(30, 10, 'Activity Mapping Report', 1, 0, 'C')
+        pdf.image("RealTime_Test/Fig_temp/figPie_Activity.png",w = 170, h = 140)
+        # pdf.add_page()
+        pdf.image("RealTime_Test/Fig_temp/figPie_SubActivity.png",w = 170, h = 140)
+        # pdf.add_page()
+        pdf.image("RealTime_Test/Fig_temp/figStandTimeBreakdown.png",w = 170, h = 140)
+        # pdf.add_page()
+        pdf.image("RealTime_Test/Fig_temp/figTimeDepth.png",w = 170, h = 140)
+        # pdf.add_page()
+        pdf.image("RealTime_Test/Fig_temp/layoutMeterageDrillingDate.png",w = 170, h = 140)
+        # pdf.add_page()
+        pdf.image("RealTime_Test/Fig_temp/layoutOBH_ROP.png",w = 170, h = 140)
+
+        # pdf.output('tuto2.pdf', 'F')
+        html = create_download_link(pdf.output(dest="S").encode("latin-1"), "test")
+        st.markdown(html, unsafe_allow_html=True)
+        # with open("post1-compressed.pdf", "rb") as pdf_file:
+        #     PDFbyte = pdf_file.read()
+        # st.download_button('Download binary file', pdf)
+
+
+
+
+
+        # for keys_fig in dict_list_fig.keys():
+        #     plotly_write_image(dict_list_fig[keys_fig], (fig_folder_temp + keys_fig), format='png')
+        #     png_renderer = pio.renderers["png"]
+        #     png_renderer
+
 
     # with st.expander("Stand Time Breakdown"):
     #     # st.markdown("<h1 style='text-align: center; font-size: 5px;margin-top: 300px;'>  Welcome !</h1>", unsafe_allow_html=True)  
